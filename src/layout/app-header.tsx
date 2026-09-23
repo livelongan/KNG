@@ -15,7 +15,7 @@ import { alpha } from '@mui/material/styles';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { ButtonFlat, TitleLevel } from '../component';
+import { ButtonFlat, TitleLevel1 } from '../component';
 import { useCommon } from '../hook';
 import { useStores } from '../store';
 
@@ -51,9 +51,9 @@ export const AppHeader = observer(({ loading }: IProps) => {
       }}
     >
       <Toolbar>
-        <TitleLevel variant="h6" sx={{ flex: 1 }}>
+        <TitleLevel1 variant="h6" sx={{ flex: 1 }}>
           React 19.3
-        </TitleLevel>
+        </TitleLevel1>
 
         {isSmall ? (
           <>

@@ -11,7 +11,7 @@ import {
   FormSelect,
   FormText,
   TextNormal,
-  TitleLevel,
+  TitleLevel1,
 } from '../component';
 import { ButtonContained, ButtonOutline, ButtonWrapper } from '../component/button';
 import { useForm, type FormRules } from '../hook';
@@ -185,7 +185,7 @@ export const FormDemoPage = observer(() => {
 
   return (
     <FormElement id={formId} spacing={2} store={formStore} onSubmit={handleSubmit}>
-      <TitleLevel variant="h4">Form Demo</TitleLevel>
+      <TitleLevel1 variant="h4">Form Demo</TitleLevel1>
       <FormText store={formStore} name="name" label="Name" />
       <FormEmail store={formStore} name="email" label="Email" />
       <FormDigital store={formStore} name="age" label="Age" />
