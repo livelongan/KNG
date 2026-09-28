@@ -22,7 +22,8 @@
     "mobx-state-tree": "^8.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.4",
+    "reicon-react": "^1.2.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
