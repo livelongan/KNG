@@ -1,50 +1,52 @@
-import { DatePicker, type DatePickerProps } from '@mui/x-date-pickers/DatePicker';
-import {
-  DateTimePicker,
-  type DateTimePickerProps,
-} from '@mui/x-date-pickers/DateTimePicker';
-import dayjs from 'dayjs';
-import type { FocusEvent } from 'react';
-import { useMemo } from 'react';
-import type { FormStore } from '../../hook';
-import type { FormDateName } from './form-base';
-import { DATE_FORMAT } from '../../constant';
+import { DatePicker, type DatePickerProps } from '@mui/x-date-pickers/DatePicker'
+import { DateTimePicker, type DateTimePickerProps } from '@mui/x-date-pickers/DateTimePicker'
+import dayjs from 'dayjs'
+import { memo, useMemo, type FocusEvent } from 'react'
+import type { FormDateName } from './form-base'
+import { areFormFieldPropsEqual } from './form-field-memo'
+import type { FormStore } from './use-form'
 
-type GenericSlotProps = Record<string, unknown>;
-type TextFieldFocusEvent = FocusEvent<HTMLInputElement | HTMLTextAreaElement>;
+type FormValues = Record<string, unknown>
+type GenericSlotProps = Record<string, unknown>
+type DateStorageFormat = 'js-date' | string
+
+type TextFieldFocusEvent = FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+
 const resolveSlotProps = (source: unknown, ownerState: unknown): GenericSlotProps => {
   if (typeof source === 'function') {
-    const resolved = (source as (input: unknown) => unknown)(ownerState);
-    return resolved && typeof resolved === 'object' ? (resolved as GenericSlotProps) : {};
+    const resolved = (source as (input: unknown) => unknown)(ownerState)
+
+    if (resolved && typeof resolved === 'object') {
+      return resolved as GenericSlotProps
+    }
+
+    return {}
   }
 
-  return source && typeof source === 'object' ? (source as GenericSlotProps) : {};
-};
+  if (source && typeof source === 'object') {
+    return source as GenericSlotProps
+  }
 
-const hasTimeToken = (format: string): boolean => /[Hhmsa]/.test(format);
+  return {}
+}
+
+const hasTimeToken = (format: string): boolean => /[HhmsaA]/.test(format)
+const hasSecond = (format: string): boolean => /s/.test(format)
+const viewsWithSeconds = ['year', 'month', 'day', 'hours', 'minutes', 'seconds'] as const
 
 export type FormPeriodProps<
-  TValues extends KeyValue,
+  TValues extends FormValues,
   TField extends FormDateName<TValues> = FormDateName<TValues>,
-> = Omit<DateTimePickerProps, 'value' | 'onChange'> & {
-  store: FormStore<TValues>;
-  name: TField;
-  onChange?: (value: dayjs.Dayjs | null, context: unknown) => void;
-  clearable?: boolean;
-  onClear?: () => void;
-  ampm?: boolean;
-};
+> = Omit<DateTimePickerProps, 'value'> & {
+  store: FormStore<TValues>
+  name: TField
+  storageFormat?: DateStorageFormat
+  clearable?: boolean
+  onClear?: () => void
+}
 
-export type FormPeriodDateProps<
-  TValues extends KeyValue,
-  TField extends FormDateName<TValues> = FormDateName<TValues>,
-> = FormPeriodProps<TValues, TField>;
-
-const hasSecond = (format: string) => /s/.test(format);
-const viewsWithSeconds = ['year', 'month', 'day', 'hours', 'minutes', 'seconds'] as const;
-
-export const FormPeriod = <
-  TValues extends KeyValue,
+const FormPeriodBase = <
+  TValues extends FormValues,
   TField extends FormDateName<TValues> = FormDateName<TValues>,
 >({
   store,
@@ -53,108 +55,136 @@ export const FormPeriod = <
   clearable = true,
   onClear,
   onChange,
-  format = DATE_FORMAT,
+  format = 'YYYY-MM-DD',
+  storageFormat,
   ampm = false,
   views,
   ...props
 }: FormPeriodProps<TValues, TField>) => {
-  const { values, errors, rules, hook } = store;
-  const resolvedViews = views ?? (hasSecond(format) ? viewsWithSeconds : undefined);
-  const rule = rules[name];
-  const value = values[name];
+  const {
+    values,
+    errors,
+    rules,
+    formRule: formRuleStore,
+    formError: formErrorStore,
+    formField: formFieldStore,
+    formValue: formValueStore,
+  } = store
+  const getRuleValue = formRuleStore.ruleValue
+  const setError = formErrorStore.set
+  const setFieldBlur = formFieldStore.blur
+  const setFieldFocus = formFieldStore.focus
+  const setValue = formValueStore.set
+
+  const ruleProps = rules[name]
+  const value = values[name]
+  const errorMessage = errors[name]
   const required = useMemo(
-    () => Boolean(hook.getRuleValue(rule?.required)),
-    [hook, rule],
-  );
-  const useDateTimePicker = hasTimeToken(format);
+    () => Boolean(getRuleValue(ruleProps?.required)),
+    [getRuleValue, ruleProps],
+  )
+  const resolvedStorageFormat = storageFormat ?? format
+  const useDateTimePicker = useMemo(() => hasTimeToken(format), [format])
+  const resolvedViews = views ?? (hasSecond(format) ? viewsWithSeconds : undefined)
 
   const clearFieldValue = () => {
-    hook.setValue(name, null);
-    hook.setError(name, null);
-    onClear?.();
-  };
+    const clearedValue = (resolvedStorageFormat === 'js-date' ? null : '') as TValues[TField]
+
+    setValue(name, clearedValue)
+    if (errorMessage !== undefined) {
+      setError(name, undefined)
+    }
+    onClear?.()
+  }
 
   const pickerValue = useMemo(() => {
-    if (value === null || value === undefined || value === '') return null;
-    const parsedValue = dayjs(value as string | Date | number);
-    return parsedValue.isValid() ? parsedValue : null;
-  }, [value]);
+    if (value === null || value === undefined || value === '') {
+      return null
+    }
 
-  const mergedSlotProps: GenericSlotProps = {
-    ...resolveSlotProps(slotProps, values),
-    field: (ownerState: unknown) => {
-      const fieldSlotProps = resolveSlotProps(
-        resolveSlotProps(slotProps, values).field,
-        ownerState,
-      );
-      const externalOnClear = fieldSlotProps.onClear as
-        ((event: unknown) => void) | undefined;
+    const parsedValue = dayjs(value as Date | string | number)
+    return parsedValue.isValid() ? parsedValue : null
+  }, [value])
+
+  const mergedSlotProps: DateTimePickerProps['slotProps'] = {
+    ...slotProps,
+    field: (ownerState) => {
+      const fieldSlotProps = resolveSlotProps(slotProps?.field, ownerState)
+      const externalOnClear = fieldSlotProps.onClear as ((event: unknown) => void) | undefined
+
       return {
         ...fieldSlotProps,
         clearable,
         onClear: (event: unknown) => {
-          clearFieldValue();
-          externalOnClear?.(event);
+          clearFieldValue()
+          externalOnClear?.(event)
         },
-      };
+      }
     },
-    textField: (ownerState: unknown) => {
-      const textFieldSlotProps = resolveSlotProps(
-        resolveSlotProps(slotProps, values).textField,
-        ownerState,
-      );
+    textField: (ownerState) => {
+      const textFieldSlotProps = resolveSlotProps(slotProps?.textField, ownerState)
       const externalOnFocus = textFieldSlotProps.onFocus as
-        ((event: TextFieldFocusEvent) => void) | undefined;
+        ((event: TextFieldFocusEvent) => void) | undefined
       const externalOnBlur = textFieldSlotProps.onBlur as
-        ((event: TextFieldFocusEvent) => void) | undefined;
+        ((event: TextFieldFocusEvent) => void) | undefined
+
       return {
         ...textFieldSlotProps,
         name: String(name),
-        error: Boolean(errors[name]) || Boolean(textFieldSlotProps.error),
-        helperText: errors[name] ?? textFieldSlotProps.helperText,
+        error: Boolean(errorMessage) || Boolean(textFieldSlotProps.error),
+        helperText: errorMessage ?? textFieldSlotProps.helperText,
         required: required || Boolean(textFieldSlotProps.required),
         onFocus: (event: TextFieldFocusEvent) => {
-          hook.setFieldFocus(name);
-          externalOnFocus?.(event);
+          setFieldFocus(name)
+          externalOnFocus?.(event)
         },
         onBlur: (event: TextFieldFocusEvent) => {
-          hook.setFieldBlur(name);
-          externalOnBlur?.(event);
+          setFieldBlur(name)
+          externalOnBlur?.(event)
         },
-      };
+      }
     },
-  };
+  }
 
-  const handleChange = (nextValue: dayjs.Dayjs | null, context: unknown) => {
-    const normalizedValue = nextValue && nextValue.isValid() ? nextValue : null;
-    const storedValue = !normalizedValue ? null : normalizedValue.toDate();
+  const handleChange: NonNullable<DateTimePickerProps['onChange']> = (nextValue, context) => {
+    const normalizedValue = nextValue ? dayjs(nextValue) : null
+    const nextStoredValue =
+      resolvedStorageFormat === 'js-date'
+        ? ((normalizedValue?.isValid() ? normalizedValue.toDate() : null) as TValues[TField])
+        : ((normalizedValue?.isValid()
+            ? normalizedValue.format(resolvedStorageFormat)
+            : '') as TValues[TField])
 
-    hook.setValue(name, storedValue as TValues[TField]);
-    hook.setError(name, null);
-    onChange?.(nextValue, context);
-  };
+    setValue(name, nextStoredValue)
+    if (errorMessage !== undefined) {
+      setError(name, undefined)
+    }
+    onChange?.(nextValue, context)
+  }
 
   if (useDateTimePicker) {
     return (
       <DateTimePicker
-        {...(props as DateTimePickerProps)}
+        {...props}
         ampm={ampm}
         format={format}
         value={pickerValue}
-        onChange={handleChange}
-        slotProps={mergedSlotProps as DateTimePickerProps['slotProps']}
         views={resolvedViews}
+        onChange={handleChange}
+        slotProps={mergedSlotProps}
       />
-    );
+    )
   }
 
   return (
     <DatePicker
-      {...(props as DatePickerProps)}
+      {...(props as Omit<DatePickerProps, 'value'>)}
       format={format}
       value={pickerValue}
-      onChange={handleChange}
+      onChange={handleChange as DatePickerProps['onChange']}
       slotProps={mergedSlotProps as DatePickerProps['slotProps']}
     />
-  );
-};
+  )
+}
+
+export const FormPeriod = memo(FormPeriodBase, areFormFieldPropsEqual) as typeof FormPeriodBase
