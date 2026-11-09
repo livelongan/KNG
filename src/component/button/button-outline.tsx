@@ -1,17 +1,17 @@
-import { observer } from 'mobx-react-lite';
-import { ButtonNormal } from './button-normal';
-import type { ButtonNormalProps } from './button-normal';
+import { observer } from 'mobx-react-lite'
+import { ButtonNormal, type ButtonNormalProps } from './button-normal'
 
-type ButtonOutlineProps = ButtonNormalProps & { children: React.ReactNode };
+type ButtonOutlinedProps = ButtonNormalProps & { children: React.ReactNode }
 
-export const ButtonOutline = observer(
-  ({ children, className, ...props }: ButtonOutlineProps) => (
+export const ButtonOutlined = observer(({ children, className, ...props }: ButtonOutlinedProps) => {
+  return (
     <ButtonNormal
       variant="outlined"
       {...props}
       className={`button-outline ${className ?? ''}`.trim()}
+      replaceClassName
     >
       {children}
     </ButtonNormal>
-  ),
-);
+  )
+})
