@@ -1,6 +1,6 @@
-import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
-import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
-import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
+import MenuOpenIcon from '@mui/icons-material/MenuOpen'
 import {
   AppBar,
   IconButton,
@@ -10,48 +10,48 @@ import {
   ListItemText,
   SwipeableDrawer,
   Toolbar,
-} from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
-import { ButtonFlat, TitleLevel1 } from '../component';
-import { useCommon } from '../hook';
-import { useStores } from '../store';
+} from '@mui/material'
+import { observer } from 'mobx-react-lite'
+import { useState } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
+import { ButtonText, TitleLevel1 } from '../component'
+import { useCommon } from '../hook'
+import { useStores } from '../store'
 
-type IProps = { loading?: boolean };
+type IProps = { loading?: boolean }
 
 const navItems = [
   { to: '/', label: 'Home' },
   { to: '/about', label: 'About' },
   { to: '/form-demo', label: 'Form Demo' },
-] as const;
+] as const
 
-const navDrawerMinHeight = 220;
-const navDrawerMaxHeight = 600;
+const navDrawerMinHeight = 220
+const navDrawerMaxHeight = 600
 
 export const AppHeader = observer(({ loading }: IProps) => {
-  const { baseStore } = useStores();
-  const { isSmall } = useCommon();
-  const isDarkMode = baseStore.themeMode === 'dark';
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { baseStore } = useStores()
+  const { isSmall } = useCommon()
+  const isDarkMode = baseStore.themeMode === 'dark'
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const openMenu = () => setIsMenuOpen(true);
-  const closeMenu = () => setIsMenuOpen(false);
+  const openMenu = () => {
+    setIsMenuOpen(true)
+  }
+
+  const closeMenu = () => {
+    setIsMenuOpen(false)
+  }
 
   return (
     <AppBar
       position="sticky"
       color="transparent"
       elevation={0}
-      sx={{
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        backdropFilter: 'blur(8px)',
-      }}
+      sx={{ borderBottom: '1px solid', borderColor: 'divider', backdropFilter: 'blur(8px)' }}
     >
       <Toolbar>
-        <TitleLevel1 variant="h6" sx={{ flex: 1 }}>
+        <TitleLevel1 color="primary" sx={{ flex: 1 }}>
           React 19.3
         </TitleLevel1>
 
@@ -59,13 +59,18 @@ export const AppHeader = observer(({ loading }: IProps) => {
           <>
             <IconButton
               color="inherit"
-              aria-label={
-                isMenuOpen ? 'close navigation drawer' : 'open navigation drawer'
-              }
+              aria-label={isMenuOpen ? 'close navigation drawer' : 'open navigation drawer'}
               aria-controls={isMenuOpen ? 'header-navigation-drawer' : undefined}
               aria-haspopup="true"
-              aria-expanded={isMenuOpen ? true : undefined}
-              onClick={() => (isMenuOpen ? closeMenu() : openMenu())}
+              aria-expanded={isMenuOpen ? 'true' : undefined}
+              onClick={() => {
+                if (isMenuOpen) {
+                  closeMenu()
+                  return
+                }
+
+                openMenu()
+              }}
             >
               <MenuOpenIcon />
             </IconButton>
@@ -81,7 +86,7 @@ export const AppHeader = observer(({ loading }: IProps) => {
                   sx: {
                     borderTopLeftRadius: 16,
                     borderTopRightRadius: 16,
-                    bgcolor: (theme) => alpha(theme.palette.background.paper, 0.7),
+                    bgcolor: (theme) => theme.palette.background.paper,
                     backdropFilter: 'blur(12px) saturate(130%)',
                     WebkitBackdropFilter: 'blur(6px) saturate(130%)',
                     minHeight: navDrawerMinHeight,
@@ -108,9 +113,9 @@ export const AppHeader = observer(({ loading }: IProps) => {
           </>
         ) : (
           navItems.map((item) => (
-            <ButtonFlat key={item.to} color="inherit" component={RouterLink} to={item.to}>
+            <ButtonText key={item.to} color="inherit" component={RouterLink} to={item.to}>
               {item.label}
-            </ButtonFlat>
+            </ButtonText>
           ))
         )}
 
@@ -118,16 +123,12 @@ export const AppHeader = observer(({ loading }: IProps) => {
           color="inherit"
           onClick={() => baseStore.toggleThemeMode()}
           aria-label={isDarkMode ? 'switch to light mode' : 'switch to dark mode'}
-          sx={{
-            ml: 1,
-            bgcolor: 'background.paper',
-            '&:hover': { bgcolor: 'action.hover' },
-          }}
+          sx={{ ml: 1 }}
         >
           {isDarkMode ? <LightModeRoundedIcon /> : <DarkModeRoundedIcon />}
         </IconButton>
       </Toolbar>
       {loading && <LinearProgress color="secondary" />}
     </AppBar>
-  );
-});
+  )
+})
