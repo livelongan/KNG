@@ -8,6 +8,7 @@ export const TitleLevel1 = observer(
     return (
       <TextNormal
         variant="h1"
+        component={'h1'}
         {...props}
         className={`title-level-1 ${className ?? ''}`.trim()}
         replaceClassName
