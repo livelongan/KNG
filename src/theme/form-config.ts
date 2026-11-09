@@ -1,7 +1,7 @@
 export const formThemeConfig = {
   input: {
-    size: 'small' as const,
-    variant: 'outlined' as const,
+    size: 'small',
+    variant: 'outlined',
     width: 450,
     maxWidth: '100%',
     notched: false,
@@ -10,13 +10,14 @@ export const formThemeConfig = {
   },
   label: {
     fontSize: '0.9375rem',
-    fontWeight: 400,
+    fontWeight: 500,
     focusFontWeight: 600,
+    color: 'var(--text-primary)',
     shrink: true,
     disableAnimation: true,
-    position: 'static' as const,
+    position: 'static',
     transform: 'none',
     maxWidth: '100%',
-    pointerEvents: 'auto' as const,
+    pointerEvents: 'auto',
   },
-} as const;
+} as const
