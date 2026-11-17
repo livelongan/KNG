@@ -1,31 +1,31 @@
-import type { FormDateName } from './form-base';
-import { FormPeriod, type FormPeriodDateProps } from './form-period';
-
-type FormValues = Record<string, unknown>;
+import { DATE_TIME_FORMAT } from '../../../constant'
+import type { FormDateName } from './form-base'
+import { FormPeriod, type FormPeriodProps } from './form-period'
 
 export type FormDateTimeProps<
-  TValues extends FormValues,
-  TField extends FormDateName<TValues> = FormDateName<TValues>,
-> = Omit<FormPeriodDateProps<TValues, TField>, 'format'> & {
-  format?: string;
-  amp?: boolean;
-};
-
+    TValues extends KeyValue,
+    TField extends FormDateName<TValues> = FormDateName<TValues>,
+> = Omit<FormPeriodProps<TValues, TField>, 'format'> & {
+    format?: string
+    ampm?: boolean
+}
 export const FormDateTime = <
-  TValues extends FormValues,
-  TField extends FormDateName<TValues> = FormDateName<TValues>,
+    TValues extends KeyValue,
+    TField extends FormDateName<TValues> = FormDateName<TValues>,
 >({
-  format = 'YYYY-MM-DD HH:mm',
-  amp = false,
-  store,
-  name,
-  ...props
-}: FormDateTimeProps<TValues, TField>) => (
-  <FormPeriod<TValues, TField>
-    {...props}
-    store={store}
-    name={name}
-    format={format}
-    amp={amp}
-  />
-);
+    format = DATE_TIME_FORMAT,
+    ampm = false,
+    store,
+    name,
+    ...props
+}: FormDateTimeProps<TValues, TField>) => {
+    return (
+        <FormPeriod<TValues, TField>
+            {...props}
+            store={store}
+            name={name}
+            format={format}
+            ampm={ampm}
+        />
+    )
+}

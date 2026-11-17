@@ -1,58 +1,102 @@
-import ClearRoundedIcon from '@mui/icons-material/ClearRounded';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import {
-  IconButton,
-  InputAdornment,
-  ListSubheader,
-  MenuItem,
-  TextField,
-} from '@mui/material';
-import type { TextFieldProps } from '@mui/material';
-import { useMemo, useState } from 'react';
-import type { FormRule, FormSelectFilter, FormStore } from '../../hook';
-import { FormBase, type FormTextName } from './form-base';
+import ClearRoundedIcon from '@mui/icons-material/ClearRounded'
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
+import { IconButton, ListSubheader, MenuItem, TextField, type TextFieldProps } from '@mui/material'
+import { memo, useMemo, useState, type ReactNode } from 'react'
+import { FormBase, type FormTextName } from './form-base'
+import { areFormFieldPropsEqual } from './form-field-memo'
+import type {
+  FormRule,
+  FormSelectFilter,
+  FormSelectOption,
+  FormStore,
+  FormSelectFilter as RuleSelectFilter,
+} from './use-form'
 
-type FormValues = Record<string, unknown>;
-type GenericSlotProps = Record<string, unknown>;
+type FormValues = Record<string, unknown>
+type GenericSlotProps = Record<string, unknown>
 
-export type FormSelectOption = {
-  key?: string;
-  disabled?: boolean;
-  [key: string]: unknown;
-};
+const resolveSlotProps = (source: unknown, ownerState: unknown): GenericSlotProps => {
+  if (typeof source === 'function') {
+    const resolved = (source as (input: unknown) => unknown)(ownerState)
+
+    if (resolved && typeof resolved === 'object') {
+      return resolved as GenericSlotProps
+    }
+
+    return {}
+  }
+
+  if (source && typeof source === 'object') {
+    return source as GenericSlotProps
+  }
+
+  return {}
+}
+
 
 export type FormSelectProps<
   TValues extends FormValues,
   TField extends FormTextName<TValues> = FormTextName<TValues>,
   TOption extends FormSelectOption = FormSelectOption,
-> = Omit<TextFieldProps, 'select' | 'children' | 'value' | 'onChange'> & {
-  store: FormStore<TValues>;
-  name: TField;
-  options: readonly TOption[];
-  valueKey?: Extract<keyof TOption, string>;
-  labelKey?: Extract<keyof TOption, string>;
-  filter?: FormSelectFilter<TValues>;
-  keywordFilter?: boolean;
-  keywordFilterPlaceholder?: string;
-  clearable?: boolean;
-  onClear?: () => void;
-};
+> = Omit<TextFieldProps, 'select' | 'children' | 'type'> & {
+  store: FormStore<TValues>
+  name: TField
+  options: ReadonlyArray<TOption>
+  valueKey?: Extract<keyof TOption, string>
+  labelKey?: Extract<keyof TOption, string>
+  filter?: FormSelectFilter<TValues, TOption>
+  keywordFilter?: boolean
+  keywordFilterPlaceholder?: string
+  clearable?: boolean
+  onClear?: () => void
+}
 
-const resolveSlotProps = (source: unknown, ownerState: unknown): GenericSlotProps => {
-  if (typeof source === 'function') {
-    const resolved = (source as (state: unknown) => unknown)(ownerState);
-    return resolved && typeof resolved === 'object' ? (resolved as GenericSlotProps) : {};
+type SelectIconProps = { className?: string }
+
+const getSearchSource = (labelValue: unknown, optionValue: string) => {
+  if (typeof labelValue === 'string' || typeof labelValue === 'number') {
+    return String(labelValue)
   }
-  return source && typeof source === 'object' ? (source as GenericSlotProps) : {};
-};
 
-const getSearchSource = (value: unknown, fallback: unknown) => {
-  if (typeof value === 'string' || typeof value === 'number') return String(value);
-  return fallback;
-};
+  return optionValue
+}
 
-export const FormSelect = <
+const shouldTrackAllValues = <
+  TValues extends FormValues,
+  TField extends FormTextName<TValues>,
+  TOption extends FormSelectOption,
+>(
+  props: FormSelectProps<TValues, TField, TOption>,
+) => {
+  const fieldRule = props.store.rules[props.name] as FormRule<TValues[TField], TValues> | undefined
+  const propFilterNeedsValues = (props.filter?.length ?? 0) >= 2
+  const ruleFilterNeedsValues = (fieldRule?.filter?.length ?? 0) >= 2
+
+  return propFilterNeedsValues || ruleFilterNeedsValues
+}
+
+const areFormSelectPropsEqual = <
+  TValues extends FormValues,
+  TField extends FormTextName<TValues>,
+  TOption extends FormSelectOption,
+>(
+  previousProps: FormSelectProps<TValues, TField, TOption>,
+  nextProps: FormSelectProps<TValues, TField, TOption>,
+) => {
+  if (!areFormFieldPropsEqual(previousProps, nextProps)) {
+    return false
+  }
+
+  const needsAllValues = shouldTrackAllValues(previousProps) || shouldTrackAllValues(nextProps)
+  if (!needsAllValues) {
+    return true
+  }
+
+  return Object.is(previousProps.store.values, nextProps.store.values)
+}
+
+const FormSelectBase = <
   TValues extends FormValues,
   TField extends FormTextName<TValues> = FormTextName<TValues>,
   TOption extends FormSelectOption = FormSelectOption,
@@ -68,162 +112,261 @@ export const FormSelect = <
   clearable = true,
   onClear,
   slotProps,
+  onChange,
+  onFocus,
+  onBlur,
+  helperText,
+  error,
+  required: requiredProp,
+  disabled,
   ...textFieldProps
 }: FormSelectProps<TValues, TField, TOption>) => {
-  const rule = store.rules[name] as FormRule<unknown, TValues> | undefined;
-  const [keyword, setKeyword] = useState('');
-  const value = store.values[name];
-  const selectedValue = value === null || value === undefined ? '' : String(value);
-  const resolvedValueKey =
-    valueKey ?? (rule?.valueKey as Extract<keyof TOption, string> | undefined) ?? 'value';
-  const resolvedLabelKey =
-    labelKey ?? (rule?.labelKey as Extract<keyof TOption, string> | undefined) ?? 'label';
-  const resolvedFilter = filter ?? rule?.filter;
-  const resolvedKeywordFilter = keywordFilter ?? rule?.keywordFilter ?? false;
-  const resolvedPlaceholder =
-    keywordFilterPlaceholder ??
-    rule?.keywordFilterPlaceholder ??
-    'Input keyword to filter';
+  const { values, rules } = store
+  const fieldRule = rules[name] as FormRule<TValues[TField], TValues> | undefined
+  const [keyword, setKeyword] = useState('')
+
+  const resolvedValueKey = (valueKey ?? fieldRule?.valueKey ?? 'value') as Extract<
+    keyof TOption,
+    string
+  >
+  const resolvedLabelKey = (labelKey ?? fieldRule?.labelKey ?? 'label') as Extract<
+    keyof TOption,
+    string
+  >
+  const propFilter = filter
+  const ruleFilter = fieldRule?.filter as RuleSelectFilter<TValues> | undefined
+  const filterNeedsValues = (propFilter?.length ?? 0) >= 2 || (ruleFilter?.length ?? 0) >= 2
+  const filterContextValues = filterNeedsValues ? values : undefined
+  const resolvedKeywordFilter = keywordFilter ?? fieldRule?.keywordFilter ?? false
+  const resolvedKeywordFilterPlaceholder =
+    keywordFilterPlaceholder ?? fieldRule?.keywordFilterPlaceholder ?? 'Input keyword to filter'
+  const normalizedKeyword = keyword.trim().toLowerCase()
+  const selectedValueRaw = values[name]
+  const selectedValue =
+    selectedValueRaw === null || selectedValueRaw === undefined ? '' : String(selectedValueRaw)
 
   const filteredOptions = useMemo(() => {
-    const ruleFiltered = options.filter((option, index, list) => {
-      if (!resolvedFilter) return true;
-      return resolvedFilter(option as never, {
-        index,
-        options: list as never,
-        values: store.values,
-      });
-    });
-    if (!resolvedKeywordFilter || keyword.trim().length === 0) return ruleFiltered;
-    const normalizedKeyword = keyword.trim().toLowerCase();
-    return ruleFiltered.filter((option) => {
-      const optionValue = getSearchSource(option[resolvedValueKey], '');
-      const optionLabel = getSearchSource(option[resolvedLabelKey], optionValue);
+    const contextValues = (filterContextValues ?? ({} as TValues)) as TValues
+
+    if (propFilter) {
+      return options.filter((option, index, list) =>
+        propFilter(option, { index, options: list, values: contextValues }),
+      )
+    }
+
+    if (ruleFilter) {
+      return options.filter((option, index, list) =>
+        ruleFilter(option as Record<string, unknown>, {
+          index,
+          options: list as ReadonlyArray<Record<string, unknown>>,
+          values: contextValues,
+        }),
+      )
+    }
+
+    return options
+  }, [options, propFilter, ruleFilter, filterContextValues])
+
+  const displayedOptions = useMemo(() => {
+    if (!resolvedKeywordFilter || normalizedKeyword.length === 0) {
+      return filteredOptions
+    }
+
+    return filteredOptions.filter((option) => {
+      const optionValueRaw = option[resolvedValueKey]
+      const optionValue =
+        optionValueRaw === null || optionValueRaw === undefined ? '' : String(optionValueRaw)
+      const isSelectedOption = selectedValue.length > 0 && optionValue === selectedValue
+
+      if (isSelectedOption) {
+        return true
+      }
+
+      const optionLabelRaw = option[resolvedLabelKey]
+      const optionSearchSource = getSearchSource(optionLabelRaw, optionValue)
+
       return (
-        String(optionValue).toLowerCase().includes(normalizedKeyword) ||
-        String(optionLabel).toLowerCase().includes(normalizedKeyword)
-      );
-    });
+        optionSearchSource.toLowerCase().includes(normalizedKeyword) ||
+        optionValue.toLowerCase().includes(normalizedKeyword)
+      )
+    })
   }, [
-    keyword,
-    options,
-    resolvedFilter,
+    filteredOptions,
+    normalizedKeyword,
     resolvedKeywordFilter,
     resolvedLabelKey,
     resolvedValueKey,
-    store.values,
-  ]);
-
-  const selectedOption = options.find(
-    (option) => String(option[resolvedValueKey]) === selectedValue,
-  );
-  const selectedLabel = selectedOption
-    ? String(selectedOption[resolvedLabelKey])
-    : selectedValue;
-  const mergedSlotProps = resolveSlotProps(slotProps, store.values);
-  const inputSlotProps = mergedSlotProps.input as GenericSlotProps | undefined;
-  const externalEndAdornment = inputSlotProps?.endAdornment;
+    selectedValue,
+  ])
 
   return (
     <FormBase<TValues, TField>
       store={store}
       name={name}
-      clearable={clearable}
-      onClear={onClear}
       slotProps={slotProps}
+      clearable={false}
+      disabled={disabled}
+      onClear={onClear}
     >
-      {(field) => (
-        <TextField
-          {...textFieldProps}
-          select
-          fullWidth
-          name={field.name}
-          value={field.value}
-          error={Boolean(field.errorMessage) || Boolean(textFieldProps.error)}
-          helperText={field.errorMessage ?? textFieldProps.helperText}
-          required={field.required || textFieldProps.required}
-          onChange={(event) => field.onFieldChange(event.target.value)}
-          onFocus={field.onFieldFocus}
-          onBlur={field.onFieldBlur}
-          slotProps={{
-            ...(field.slotProps as TextFieldProps['slotProps']),
-            input: {
-              ...(inputSlotProps ?? {}),
-              endAdornment: (
-                <>
-                  {clearable && field.value.trim().length > 0 && (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        aria-label={`Clear ${String(field.name)}`}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => field.onFieldClear?.()}
-                      >
-                        <ClearRoundedIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  )}
-                  {externalEndAdornment}
-                </>
-              ),
-            },
-            select: {
-              IconComponent: ({ className }: { className?: string }) => (
-                <IconButton
-                  className={className}
-                  component="span"
-                  size="small"
-                  tabIndex={-1}
-                >
-                  {className?.includes('MuiSelect-iconOpen') ? (
-                    <KeyboardArrowUpIcon fontSize="small" />
-                  ) : (
-                    <KeyboardArrowDownIcon fontSize="small" />
-                  )}
-                </IconButton>
-              ),
-            },
-          }}
-        >
-          {resolvedKeywordFilter && (
-            <ListSubheader disableSticky>
-              <TextField
-                autoFocus
-                fullWidth
-                size="small"
-                placeholder={resolvedPlaceholder}
-                value={keyword}
-                onChange={(event) => setKeyword(event.target.value)}
-                onKeyDown={(event) => event.stopPropagation()}
-                onClick={(event) => event.stopPropagation()}
-              />
-            </ListSubheader>
-          )}
-          {filteredOptions.map((option, index) => {
-            const optionValue = String(option[resolvedValueKey] ?? '');
-            const optionLabel = option[resolvedLabelKey] ?? optionValue;
+      {({
+        name: fieldName,
+        value,
+        errorMessage,
+        required,
+        slotProps: mergedSlotProps,
+        onFieldChange,
+        onFieldClear,
+        onFieldFocus,
+        onFieldBlur,
+      }) => {
+        const hasValue = value.trim().length > 0
+
+        const SelectControlIcon = ({ className }: SelectIconProps) => {
+          if (clearable && hasValue && !disabled) {
             return (
-              <MenuItem
-                key={
-                  typeof option.key === 'string'
-                    ? option.key
-                    : `${optionValue}-${String(index)}`
-                }
-                value={optionValue}
-                disabled={Boolean(option.disabled)}
+              <IconButton
+                className={className}
+                component="span"
+                size="small"
+                tabIndex={-1}
+                aria-label={`Clear ${fieldName}`}
+                onPointerDown={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                }}
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onFieldClear()
+                }}
+                style={{ top: 'unset', pointerEvents: 'auto' }}
               >
-                {optionLabel as React.ReactNode}
-              </MenuItem>
-            );
-          })}
-          {filteredOptions.length === 0 && (
-            <MenuItem disabled>No matching options</MenuItem>
-          )}
-          {!selectedOption && selectedLabel && (
-            <MenuItem value={selectedValue}>{selectedLabel}</MenuItem>
-          )}
-        </TextField>
-      )}
+                <ClearRoundedIcon fontSize="small" />
+              </IconButton>
+            )
+          }
+
+          const isOpen = className?.includes('MuiSelect-iconOpen')
+
+          return (
+            <IconButton
+              className={className}
+              component="span"
+              size="small"
+              disableRipple
+              tabIndex={-1}
+              aria-hidden
+              style={{ top: 'unset', pointerEvents: 'none' }}
+            >
+              {isOpen ? (
+                <KeyboardArrowUpIcon fontSize="small" />
+              ) : (
+                <KeyboardArrowDownIcon fontSize="small" />
+              )}
+            </IconButton>
+          )
+        }
+
+        const appliedSlotProps: TextFieldProps['slotProps'] = {
+          ...mergedSlotProps,
+          select: (ownerState) => {
+            const selectSlotProps = resolveSlotProps(mergedSlotProps?.select, ownerState)
+            const externalOnClose = selectSlotProps.onClose as
+              ((event: unknown) => void) | undefined
+            const externalMenuProps =
+              (selectSlotProps.MenuProps as GenericSlotProps | undefined) ?? {}
+
+            return {
+              ...selectSlotProps,
+              IconComponent: selectSlotProps.IconComponent ?? SelectControlIcon,
+              onClose: (event: unknown) => {
+                setKeyword('')
+                externalOnClose?.(event)
+              },
+              MenuProps: resolvedKeywordFilter
+                ? { ...externalMenuProps, disableAutoFocusItem: true }
+                : externalMenuProps,
+            }
+          },
+        }
+
+        return (
+          <TextField
+            {...textFieldProps}
+            select
+            name={fieldName}
+            value={value}
+            error={Boolean(errorMessage) || Boolean(error)}
+            helperText={errorMessage ?? helperText}
+            required={required || Boolean(requiredProp)}
+            disabled={disabled}
+            onChange={(event) => {
+              onFieldChange(event.target.value)
+              onChange?.(event)
+            }}
+            onFocus={(event) => {
+              onFieldFocus()
+              onFocus?.(event)
+            }}
+            onBlur={(event) => {
+              onFieldBlur()
+              onBlur?.(event)
+            }}
+            slotProps={appliedSlotProps}
+          >
+            {resolvedKeywordFilter ? (
+              <ListSubheader disableSticky>
+                <TextField
+                  fullWidth
+                  autoFocus
+                  size="small"
+                  placeholder={resolvedKeywordFilterPlaceholder}
+                  value={keyword}
+                  onChange={(event) => {
+                    setKeyword(event.target.value)
+                  }}
+                  onKeyDown={(event) => {
+                    event.stopPropagation()
+                  }}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                  }}
+                  onPointerDown={(event) => {
+                    event.stopPropagation()
+                  }}
+                />
+              </ListSubheader>
+            ) : null}
+            {displayedOptions.map((option, index) => {
+              const optionValueRaw = option[resolvedValueKey]
+              const optionValue =
+                optionValueRaw === null || optionValueRaw === undefined
+                  ? ''
+                  : String(optionValueRaw)
+              const optionLabelRaw = option[resolvedLabelKey]
+              const optionLabel = (optionLabelRaw ?? optionValue) as ReactNode
+
+              return (
+                <MenuItem
+                  key={
+                    typeof option.key === 'string' ? option.key : `${optionValue}-${String(index)}`
+                  }
+                  value={optionValue}
+                  disabled={Boolean(option.disabled)}
+                >
+                  {optionLabel}
+                </MenuItem>
+              )
+            })}
+
+            {displayedOptions.length === 0 ? (
+              <MenuItem disabled>No matching options</MenuItem>
+            ) : null}
+          </TextField>
+        )
+      }}
     </FormBase>
-  );
-};
+  )
+}
+
+export const FormSelect = memo(FormSelectBase, areFormSelectPropsEqual) as typeof FormSelectBase

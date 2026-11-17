@@ -1,21 +1,22 @@
-import { TextField } from '@mui/material';
-import type { TextFieldProps } from '@mui/material';
-import type { FormStore } from '../../hook';
-import { FormBase, type FormTextName } from './form-base';
+import { TextField, type TextFieldProps } from '@mui/material'
+import { memo } from 'react'
+import { FormBase, type FormTextName } from './form-base'
+import { areFormFieldPropsEqual } from './form-field-memo'
+import type { FormStore } from './use-form'
 
-type FormValues = Record<string, unknown>;
+type FormValues = Record<string, unknown>
 
 export type FormTextProps<
   TValues extends FormValues,
   TField extends FormTextName<TValues> = FormTextName<TValues>,
 > = TextFieldProps & {
-  store: FormStore<TValues>;
-  name: TField;
-  clearable?: boolean;
-  onClear?: () => void;
-};
+  name: TField
+  store: FormStore<TValues>
+  clearable?: boolean
+  onClear?: () => void
+}
 
-export const FormText = <
+const FormTextBase = <
   TValues extends FormValues,
   TField extends FormTextName<TValues> = FormTextName<TValues>,
 >({
@@ -23,30 +24,61 @@ export const FormText = <
   name,
   clearable = true,
   onClear,
+  slotProps,
+  onChange,
+  onFocus,
+  onBlur,
+  helperText,
+  error,
+  required: requiredProp,
+  disabled,
   ...textFieldProps
-}: FormTextProps<TValues, TField>) => (
-  <FormBase<TValues, TField>
-    store={store}
-    name={name}
-    clearable={clearable}
-    onClear={onClear}
-    slotProps={textFieldProps.slotProps}
-  >
-    {(field) => (
-      <TextField
-        {...textFieldProps}
-        fullWidth
-        type="text"
-        name={field.name}
-        value={field.value}
-        error={Boolean(field.errorMessage) || Boolean(textFieldProps.error)}
-        helperText={field.errorMessage ?? textFieldProps.helperText}
-        required={field.required || textFieldProps.required}
-        onChange={(event) => field.onFieldChange(event.target.value)}
-        onFocus={field.onFieldFocus}
-        onBlur={field.onFieldBlur}
-        slotProps={field.slotProps}
-      />
-    )}
-  </FormBase>
-);
+}: FormTextProps<TValues, TField>) => {
+  return (
+    <FormBase
+      store={store}
+      name={name}
+      slotProps={slotProps}
+      clearable={clearable}
+      disabled={disabled}
+      onClear={onClear}
+    >
+      {({
+        name: fieldName,
+        value,
+        errorMessage,
+        required,
+        slotProps: mergedSlotProps,
+        onFieldChange,
+        onFieldFocus,
+        onFieldBlur,
+      }) => (
+        <TextField
+          type="text"
+          {...textFieldProps}
+          name={fieldName}
+          value={value}
+          error={Boolean(errorMessage) || Boolean(error)}
+          helperText={errorMessage ?? helperText}
+          required={required || Boolean(requiredProp)}
+          disabled={disabled}
+          onChange={(event) => {
+            onFieldChange(event.target.value)
+            onChange?.(event)
+          }}
+          onFocus={(event) => {
+            onFieldFocus()
+            onFocus?.(event)
+          }}
+          onBlur={(event) => {
+            onFieldBlur()
+            onBlur?.(event)
+          }}
+          slotProps={mergedSlotProps}
+        />
+      )}
+    </FormBase>
+  )
+}
+
+export const FormText = memo(FormTextBase, areFormFieldPropsEqual) as typeof FormTextBase

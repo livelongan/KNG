@@ -1,66 +1,84 @@
-import { TextField } from '@mui/material';
-import type { TextFieldProps } from '@mui/material';
-import type { FormStore } from '../../hook';
+import ClearRoundedIcon from '@mui/icons-material/ClearRounded'
+import { IconButton, InputAdornment, type TextFieldProps } from '@mui/material'
+import { useMemo, type ReactNode } from 'react'
+import type { FormStore } from './use-form'
 
-type FormValues = Record<string, unknown>;
+type FormValues = Record<string, unknown>
+type GenericSlotProps = Record<string, unknown>
+export type FormFieldName<TValues extends FormValues> = Extract<keyof TValues, string>
+type KeysByValueType<TValues extends FormValues, TValue> = Extract<
+  {
+    [TField in keyof TValues]-?: NonNullable<TValues[TField]> extends TValue ? TField : never
+  }[keyof TValues],
+  string
+>
 
-type GenericSlotProps<TValues extends FormValues> =
-  TextFieldProps['slotProps'] | ((ownerState: TValues) => TextFieldProps['slotProps']);
-
-const resolveSlotProps = <TValues extends FormValues>(
-  source: GenericSlotProps<TValues> | undefined,
-  ownerState: TValues,
-): TextFieldProps['slotProps'] => {
+const resolveSlotProps = (source: unknown, ownerState: unknown): GenericSlotProps => {
   if (typeof source === 'function') {
-    return source(ownerState);
+    const resolved = (source as (input: unknown) => unknown)(ownerState)
+    if (resolved && typeof resolved === 'object') {
+      return resolved as GenericSlotProps
+    }
+    return {}
   }
-  return source;
-};
+  if (source && typeof source === 'object') {
+    return source as GenericSlotProps
+  }
+  return {}
+}
 
-export type FormTextName<TValues extends FormValues> = keyof TValues & string;
-export type FormNumberName<TValues extends FormValues> = keyof TValues & string;
-export type FormDateName<TValues extends FormValues> = keyof TValues & string;
-export type FormBooleanName<TValues extends FormValues> = keyof TValues & string;
+export type FormTextName<TValues extends FormValues> = unknown extends TValues[keyof TValues]
+  ? Extract<keyof TValues, string>
+  : KeysByValueType<TValues, string>
+export type FormNumberName<TValues extends FormValues> = unknown extends TValues[keyof TValues]
+  ? Extract<keyof TValues, string>
+  : KeysByValueType<TValues, number>
+export type FormDateName<TValues extends FormValues> = unknown extends TValues[keyof TValues]
+  ? Extract<keyof TValues, string>
+  : KeysByValueType<TValues, string | Date>
+export type FormBooleanName<TValues extends FormValues> = unknown extends TValues[keyof TValues]
+  ? Extract<keyof TValues, string>
+  : KeysByValueType<TValues, boolean>
 
 export type FormFieldProps = {
-  name: string;
-  value: string;
-  errorMessage?: string;
-  required?: boolean;
-  rows?: number;
-  minLength?: number;
-  maxLength?: number;
-  min?: number;
-  max?: number;
-  step?: number;
-  autoComplete?: string;
-  inputMode?: string;
-  slotProps?: TextFieldProps['slotProps'];
-  onFieldChange: (nextValue: string) => void;
-  onFieldFocus: () => void;
-  onFieldBlur: () => void;
-  onFieldClear?: () => void;
-};
+  name: string
+  value: string
+  errorMessage?: string
+  required: boolean
+  rows?: number
+  minLength?: number
+  maxLength?: number
+  min?: number
+  max?: number
+  step?: number
+  autoComplete?: string
+  inputMode?: string
+  slotProps: TextFieldProps['slotProps']
+  onFieldChange: (nextValue: string) => void
+  onFieldFocus: () => void
+  onFieldBlur: () => void
+  onFieldClear: () => void
+}
 
 export type FormBaseProps<
   TValues extends FormValues,
-  TField extends FormTextName<TValues> = FormTextName<TValues>,
+  TField extends FormFieldName<TValues> = FormFieldName<TValues>,
 > = {
-  store: FormStore<TValues>;
-  name: TField;
-  slotProps?: TextFieldProps['slotProps'];
-  clearable?: boolean;
-  disabled?: boolean;
-  onChange?: (nextValue: string) => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
-  onClear?: () => void;
-  children: (fieldProps: FormFieldProps) => React.ReactNode;
-};
+  store: FormStore<TValues>
+  name: TField
+  slotProps?: TextFieldProps['slotProps']
+  clearable?: boolean
+  disabled?: boolean
+  onChange?: (nextValue: string) => void
+  onFocus?: () => void
+  onBlur?: () => void
+  onClear?: () => void
+  children: (fieldProps: FormFieldProps) => ReactNode
+}
 
 export const FormBase = <
   TValues extends FormValues,
-  TField extends FormTextName<TValues> = FormTextName<TValues>,
+  TField extends FormFieldName<TValues> = FormFieldName<TValues>,
 >({
   store,
   name,
@@ -73,70 +91,136 @@ export const FormBase = <
   onClear,
   children,
 }: FormBaseProps<TValues, TField>) => {
-  const rule = store.rules[name];
-  const value = String(store.values[name] ?? '');
-  const errorMessage = store.errors[name];
-  const getRuleValue = store.hook.getRuleValue;
-  const required = Boolean(getRuleValue(rule?.required));
-  const mergedSlotProps = resolveSlotProps(slotProps, store.values);
+  const {
+    values,
+    errors,
+    rules,
+    formRule: formRuleStore,
+    formError: formErrorStore,
+    formField: formFieldStore,
+    formValue: formValueStore,
+  } = store
+  const getRuleValue = formRuleStore.ruleValue
+  const setError = formErrorStore.set
+  const setFieldBlur = formFieldStore.blur
+  const setFieldFocus = formFieldStore.focus
+  const setValue = formValueStore.set
+  const rule = rules[name]
+  const rawValue = values[name]
+  const value =
+    rawValue === null ||
+    rawValue === undefined ||
+    (typeof rawValue === 'number' && Number.isNaN(rawValue))
+      ? ''
+      : String(rawValue)
+  const errorMessage = errors[name]
+  const { required, rows, minLength, maxLength, min, max, step, autoComplete, inputMode } = useMemo(
+    () => ({
+      required: Boolean(getRuleValue(rule?.required)),
+      rows: rule?.rows,
+      minLength: getRuleValue(rule?.minLength),
+      maxLength: getRuleValue(rule?.maxLength),
+      min: getRuleValue(rule?.min),
+      max: getRuleValue(rule?.max),
+      step: rule?.step,
+      autoComplete: rule?.autoComplete,
+      inputMode: rule?.inputMode,
+    }),
+    [getRuleValue, rule],
+  )
 
   const onFieldChange = (nextValue: string) => {
-    store.hook.setValue(name, nextValue as TValues[TField]);
-    store.hook.setError(name, null);
-    onChange?.(nextValue);
-  };
+    setValue(name, nextValue as TValues[TField])
+    if (errorMessage !== undefined) {
+      setError(name, undefined)
+    }
+    onChange?.(nextValue)
+  }
   const onFieldFocus = () => {
-    store.hook.setFieldFocus(name);
-    onFocus?.();
-  };
+    setFieldFocus(name)
+    onFocus?.()
+  }
   const onFieldBlur = () => {
-    store.hook.setFieldBlur(name);
-    onBlur?.();
-  };
+    setFieldBlur(name)
+    onBlur?.()
+  }
   const onFieldClear = () => {
-    if (onClear) onClear();
-    else onFieldChange('');
-  };
+    if (onClear) {
+      onClear()
+      return
+    }
+    setValue(name, '' as TValues[TField])
+    if (errorMessage !== undefined) {
+      setError(name, undefined)
+    }
+  }
+
+  const mergedSlotProps: TextFieldProps['slotProps'] = {
+    ...slotProps,
+    input: (ownerState) => {
+      const inputSlotProps = resolveSlotProps(slotProps?.input, ownerState)
+      const externalEndAdornment = inputSlotProps.endAdornment as ReactNode
+      const showClear = Boolean(clearable && value && !disabled)
+
+      return {
+        ...inputSlotProps,
+        endAdornment: showClear ? (
+          <>
+            {externalEndAdornment}
+            <InputAdornment position="end">
+              <IconButton
+                aria-label={`Clear ${String(name)}`}
+                edge="end"
+                onPointerDown={(event) => {
+                  event.preventDefault()
+                }}
+                onClick={onFieldClear}
+                size="small"
+                type="button"
+                className="clear-button"
+              >
+                <ClearRoundedIcon fontSize="small" />
+              </IconButton>
+            </InputAdornment>
+          </>
+        ) : (
+          (externalEndAdornment ?? null)
+        ),
+      }
+    },
+    htmlInput: (ownerState) => {
+      const htmlInputSlotProps = resolveSlotProps(slotProps?.htmlInput, ownerState)
+
+      return {
+        ...htmlInputSlotProps,
+        minLength: minLength ?? (htmlInputSlotProps.minLength as number | undefined),
+        maxLength: maxLength ?? (htmlInputSlotProps.maxLength as number | undefined),
+        min: min ?? (htmlInputSlotProps.min as number | undefined),
+        max: max ?? (htmlInputSlotProps.max as number | undefined),
+        step: step ?? (htmlInputSlotProps.step as number | undefined),
+        autoComplete: autoComplete ?? (htmlInputSlotProps.autoComplete as string | undefined),
+        inputMode: inputMode ?? (htmlInputSlotProps.inputMode as string | undefined),
+      }
+    },
+  }
 
   return children({
-    name,
+    name: String(name),
     value,
     errorMessage,
     required,
-    rows: rule?.rows,
-    minLength: getRuleValue(rule?.minLength),
-    maxLength: getRuleValue(rule?.maxLength),
-    min: getRuleValue(rule?.min),
-    max: getRuleValue(rule?.max),
-    step: rule?.step,
-    autoComplete: rule?.autoComplete,
-    inputMode: rule?.inputMode,
+    rows,
+    minLength,
+    maxLength,
+    min,
+    max,
+    step,
+    autoComplete,
+    inputMode,
     slotProps: mergedSlotProps,
     onFieldChange,
     onFieldFocus,
     onFieldBlur,
-    onFieldClear: clearable ? onFieldClear : undefined,
-  });
-};
-
-export const FormTextName = <TValues extends FormValues>(
-  props: FormBaseProps<TValues>,
-) => (
-  <FormBase {...props}>
-    {(field) => (
-      <TextField
-        fullWidth
-        name={field.name}
-        value={field.value}
-        error={Boolean(field.errorMessage)}
-        helperText={field.errorMessage}
-        required={field.required}
-        disabled={props.disabled}
-        onChange={(event) => field.onFieldChange(event.target.value)}
-        onFocus={field.onFieldFocus}
-        onBlur={field.onFieldBlur}
-        slotProps={field.slotProps}
-      />
-    )}
-  </FormBase>
-);
+    onFieldClear,
+  })
+}

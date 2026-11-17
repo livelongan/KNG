@@ -1,58 +1,92 @@
-import { TextField } from '@mui/material';
-import type { TextFieldProps } from '@mui/material';
-import type { FormStore } from '../../hook';
-import { FormBase, type FormNumberName } from './form-base';
+import { TextField, type TextFieldProps } from '@mui/material'
+import { memo } from 'react'
+import { FormBase, type FormTextName } from './form-base'
+import { areFormFieldPropsEqual } from './form-field-memo'
+import type { FormStore } from './use-form'
 
-type FormValues = Record<string, unknown>;
+type FormValues = Record<string, unknown>
+
+const nonDigitPattern = /\D+/g
 
 export type FormDigitalProps<
   TValues extends FormValues,
-  TField extends FormNumberName<TValues> = FormNumberName<TValues>,
-> = Omit<TextFieldProps, 'type' | 'value' | 'onChange'> & {
-  store: FormStore<TValues>;
-  name: TField;
-  clearable?: boolean;
-  onClear?: () => void;
-};
+  TField extends FormTextName<TValues> = FormTextName<TValues>,
+> = Omit<TextFieldProps, 'type'> & {
+  store: FormStore<TValues>
+  name: TField
+  clearable?: boolean
+  onClear?: () => void
+}
 
-const nonDigitPattern = /[^0-9.-]/g;
-
-export const FormDigital = <
+const FormDigitalBase = <
   TValues extends FormValues,
-  TField extends FormNumberName<TValues> = FormNumberName<TValues>,
+  TField extends FormTextName<TValues> = FormTextName<TValues>,
 >({
   store,
   name,
   clearable = true,
   onClear,
+  slotProps,
+  onChange,
+  onFocus,
+  onBlur,
+  helperText,
+  error,
+  required: requiredProp,
+  disabled,
   ...textFieldProps
-}: FormDigitalProps<TValues, TField>) => (
-  <FormBase<TValues, TField>
-    store={store}
-    name={name}
-    clearable={clearable}
-    onClear={onClear}
-    slotProps={textFieldProps.slotProps}
-  >
-    {(field) => (
-      <TextField
-        {...textFieldProps}
-        fullWidth
-        type="number"
-        name={field.name}
-        value={field.value}
-        error={Boolean(field.errorMessage) || Boolean(textFieldProps.error)}
-        helperText={field.errorMessage ?? textFieldProps.helperText}
-        required={field.required || textFieldProps.required}
-        onChange={(event) => {
-          const nextValue = event.target.value.replace(nonDigitPattern, '');
-          if (nextValue !== event.target.value) return;
-          field.onFieldChange(nextValue);
-        }}
-        onFocus={field.onFieldFocus}
-        onBlur={field.onFieldBlur}
-        slotProps={field.slotProps}
-      />
-    )}
-  </FormBase>
-);
+}: FormDigitalProps<TValues, TField>) => {
+  return (
+    <FormBase
+      store={store}
+      name={name}
+      slotProps={slotProps}
+      clearable={clearable}
+      disabled={disabled}
+      onClear={onClear}
+    >
+      {({
+        name: fieldName,
+        value,
+        errorMessage,
+        required,
+        slotProps: mergedSlotProps,
+        onFieldChange,
+        onFieldFocus,
+        onFieldBlur,
+      }) => (
+        <TextField
+          {...textFieldProps}
+          type="text"
+          name={fieldName}
+          value={value}
+          error={Boolean(errorMessage) || Boolean(error)}
+          helperText={errorMessage ?? helperText}
+          required={required || Boolean(requiredProp)}
+          disabled={disabled}
+          onChange={(event) => {
+            const nextValue = event.target.value.replace(nonDigitPattern, '')
+
+            if (nextValue !== event.target.value) {
+              event.target.value = nextValue
+            }
+
+            onFieldChange(nextValue)
+            onChange?.(event)
+          }}
+          onFocus={(event) => {
+            onFieldFocus()
+            onFocus?.(event)
+          }}
+          onBlur={(event) => {
+            onFieldBlur()
+            onBlur?.(event)
+          }}
+          slotProps={mergedSlotProps}
+        />
+      )}
+    </FormBase>
+  )
+}
+
+export const FormDigital = memo(FormDigitalBase, areFormFieldPropsEqual) as typeof FormDigitalBase
