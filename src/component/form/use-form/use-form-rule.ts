@@ -4,7 +4,6 @@ import type {
   FormRule,
   FormRulePatch,
   FormRules,
-  FormProps,
   RuleProps,
   RuleType,
 } from "./types";
@@ -111,7 +110,7 @@ export const useFormRule = <TValues extends KeyValue>(
     setRuleState(nextRules);
   }, [initialRules]);
 
-  const getRuleValue: FormHookHandle<TValues>["ruleValue"] = useCallback(
+  const getRuleValue: FormHookHandle<TValues>["getRuleValue"] = useCallback(
     (rule) => extractRuleValue(rule),
     [],
   );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import type { FormErrors, FormHookOptions, FormStore } from "./types";
+import type { FormErrors, FormHookOptions, FormInstance } from "./types";
 import { useFormError } from "./use-form-error";
 import { useFormField } from "./use-form-field";
 import { useFormRule, normalizeRuleValue } from "./use-form-rule";
@@ -17,7 +17,7 @@ export type {
   FormSelectFilter,
   FormSelectOption,
   FormState,
-  FormStore,
+  FormInstance,
   KeyValue,
   RuleProps,
   RuleType,
@@ -69,7 +69,7 @@ const getNumericValue = (value: unknown): number | null => {
 
 export const useForm = <TValues extends KeyValue>(
   options: FormHookOptions<TValues>,
-): FormStore<TValues> => {
+): FormInstance<TValues> => {
   const { defaultValues, rules: optionRules } = options;
   const formState = useFormState();
   const setFormState = formState.set;
@@ -160,7 +160,7 @@ export const useForm = <TValues extends KeyValue>(
     [formRule.data, values],
   );
 
-  const trigger: FormStore<TValues>["trigger"] = useCallback(
+  const trigger: FormInstance<TValues>["trigger"] = useCallback(
     async (name?: keyof TValues): Promise<boolean> => {
       if (name !== undefined) {
         const fieldError = await validateField(name);
@@ -290,7 +290,7 @@ export const useForm = <TValues extends KeyValue>(
     return unsubscribe;
   }, [subscribeValueChange]);
 
-  const reset: FormStore<TValues>["reset"] = useCallback(() => {
+  const reset: FormInstance<TValues>["reset"] = useCallback(() => {
     formError.reset();
     formField.reset();
     formState.reset();

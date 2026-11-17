@@ -1,6 +1,3 @@
-import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
-import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
-import MenuOpenIcon from '@mui/icons-material/MenuOpen'
 import { Sun } from 'reicon-react'
 import { Moon } from 'reicon-react'
 import { ListDown } from 'reicon-react'

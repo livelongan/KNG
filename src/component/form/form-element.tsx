@@ -2,7 +2,7 @@ import { Stack, type StackProps } from '@mui/material'
 import { observer } from 'mobx-react-lite'
 import { type ReactNode } from 'react'
 import { waiting } from '../../../tools'
-import { type FormStore } from './use-form'
+import { type FormInstance } from './use-form'
 export type FormElementSubmitContext = { focusField: (fieldName: string) => void }
 
 type FormElementEvent = { preventDefault: () => void; currentTarget: HTMLFormElement }
@@ -10,7 +10,7 @@ type FormElementEvent = { preventDefault: () => void; currentTarget: HTMLFormEle
 type FormElementProps<TValues extends KeyValue> = Omit<StackProps<'form'>, 'component'> & {
     id?: string
     spacing?: StackProps['spacing']
-    store: FormStore<TValues>
+    store: FormInstance<TValues>
     onSubmit?: (formData: FormData, context: FormElementSubmitContext) => void | Promise<void>
     children: ReactNode
 }
@@ -52,7 +52,7 @@ const getFirstInvalidFieldName = (formElement: HTMLFormElement, fieldNames: stri
     return null
 }
 
-const getValidationFieldNames = <TValues extends KeyValue>(store: FormStore<TValues>) => {
+const getValidationFieldNames = <TValues extends KeyValue>(store: FormInstance<TValues>) => {
     return Object.keys(store.rules) as Array<keyof TValues>
 }
 

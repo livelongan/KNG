@@ -190,7 +190,7 @@ export type FormFieldStore<TValues extends KeyValue> = {
   ) => void;
 };
 
-export type FormStore<TValues extends KeyValue> = {
+export type FormInstance<TValues extends KeyValue> = {
   values: TValues;
   rules: FormRules<TValues>;
   errors: FormErrors<TValues>;
@@ -203,4 +203,4 @@ export type FormStore<TValues extends KeyValue> = {
   reset: () => void;
 };
 
-export type FormProps<TValues extends KeyValue> = FormStore<TValues>;
+export type FormProps<TValues extends KeyValue> = FormInstance<TValues>;

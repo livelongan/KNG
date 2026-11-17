@@ -12,7 +12,7 @@ import {
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { FormBooleanName } from './form-base'
 import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormStore } from './use-form'
+import type { FormInstance } from './use-form'
 
 type FormValues = Record<string, unknown>
 
@@ -20,7 +20,7 @@ export type FormCheckboxProps<
   TValues extends FormValues,
   TField extends FormBooleanName<TValues> = FormBooleanName<TValues>,
 > = Omit<CheckboxProps, 'name' | 'checked' | 'onChange' | 'required'> & {
-  store: FormStore<TValues>
+  store: FormInstance<TValues>
   name: TField
   label?: ReactNode
   helperText?: ReactNode
@@ -156,7 +156,7 @@ const FormCheckboxBase = <
               disabled={disabled}
               onChange={(_, nextChecked) => {
                 setValue(name, nextChecked as TValues[TField])
-                setError(name, undefined)
+                setError(name, null)
                 onCheckedChange?.(nextChecked)
               }}
               onFocus={() => {

@@ -4,7 +4,7 @@ import { IconButton, InputAdornment, Stack, TextField, type TextFieldProps } fro
 import { memo, type ReactNode } from 'react'
 import { FormBase, type FormNumberName } from './form-base'
 import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormStore } from './use-form'
+import type { FormInstance } from './use-form'
 
 type FormValues = Record<string, unknown>
 type GenericSlotProps = Record<string, unknown>
@@ -47,7 +47,7 @@ export type FormNumericProps<
   TValues extends FormValues,
   TField extends FormNumberName<TValues> = FormNumberName<TValues>,
 > = Omit<TextFieldProps, 'type'> & {
-  store: FormStore<TValues>
+  store: FormInstance<TValues>
   name: TField
   clearable?: boolean
   onClear?: () => void
@@ -116,7 +116,7 @@ const FormNumericBase = <
     }
 
     setValue(name, Number.NaN as TValues[TField])
-    setError(name, undefined)
+    setError(name, null)
   }
 
   return (
@@ -172,7 +172,7 @@ const FormNumericBase = <
             normalizedMax !== undefined ? Math.min(minBoundValue, normalizedMax) : minBoundValue
 
           setValue(name, clampedValue as TValues[TField])
-          setError(name, undefined)
+          setError(name, null)
         }
 
         const incrementTargetValue = hasInputValue
@@ -259,7 +259,7 @@ const FormNumericBase = <
               const nextRawValue = event.target.value
               if (nextRawValue.trim().length === 0) {
                 setValue(name, Number.NaN as TValues[TField])
-                setError(name, undefined)
+                setError(name, null)
                 onChange?.(event)
                 return
               }

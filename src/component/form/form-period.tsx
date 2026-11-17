@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { memo, useMemo, type FocusEvent } from 'react'
 import type { FormDateName } from './form-base'
 import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormStore } from './use-form'
+import type { FormInstance } from './use-form'
 
 type FormValues = Record<string, unknown>
 type GenericSlotProps = Record<string, unknown>
@@ -38,7 +38,7 @@ export type FormPeriodProps<
     TValues extends FormValues,
     TField extends FormDateName<TValues> = FormDateName<TValues>,
 > = Omit<DateTimePickerProps, 'value'> & {
-    store: FormStore<TValues>
+    store: FormInstance<TValues>
     name: TField
     storageFormat?: DateStorageFormat
     clearable?: boolean

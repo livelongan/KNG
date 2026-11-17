@@ -2,7 +2,7 @@ import { TextField, type TextFieldProps } from '@mui/material'
 import { memo } from 'react'
 import { FormBase, type FormTextName } from './form-base'
 import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormStore } from './use-form'
+import type { FormInstance } from './use-form'
 
 type FormValues = Record<string, unknown>
 
@@ -11,7 +11,7 @@ export type FormTextProps<
   TField extends FormTextName<TValues> = FormTextName<TValues>,
 > = TextFieldProps & {
   name: TField
-  store: FormStore<TValues>
+  store: FormInstance<TValues>
   clearable?: boolean
   onClear?: () => void
 }

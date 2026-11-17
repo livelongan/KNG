@@ -1,0 +1,1 @@
+import{C as e,S as t,it as n,t as r}from"./mobxreactlite-CB-bLXJx.js";var i=n(),a=r(()=>(0,i.jsx)(t,{children:(0,i.jsx)(e,{variant:`h4`,sx:{fontWeight:700},children:`Welcome`})}));export{a as HomePage};

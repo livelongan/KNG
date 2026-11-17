@@ -21,7 +21,7 @@ import {
 import { TextSmall } from '../typography'
 import type { FormTextName } from './form-base'
 import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormRule, FormSelectOption, FormStore } from './use-form'
+import type { FormInstance, FormRule, FormSelectOption } from './use-form'
 
 type FormValues = Record<string, unknown>
 type Primitive = string | number | boolean
@@ -60,7 +60,7 @@ export type FormDropdownProps<
     TField extends FormTextName<TValues> = FormTextName<TValues>,
     TOption extends FormDropdownOption = FormDropdownOption,
 > = BaseAutocompleteProps<TOption> & {
-    store: FormStore<TValues>
+    store: FormInstance<TValues>
     name: TField
     options: ReadonlyArray<TOption>
     label?: TextFieldProps['label']

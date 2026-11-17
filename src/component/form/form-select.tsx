@@ -9,7 +9,7 @@ import type {
   FormRule,
   FormSelectFilter,
   FormSelectOption,
-  FormStore,
+  FormInstance,
   FormSelectFilter as RuleSelectFilter,
 } from './use-form'
 
@@ -40,7 +40,7 @@ export type FormSelectProps<
   TField extends FormTextName<TValues> = FormTextName<TValues>,
   TOption extends FormSelectOption = FormSelectOption,
 > = Omit<TextFieldProps, 'select' | 'children' | 'type'> & {
-  store: FormStore<TValues>
+  store: FormInstance<TValues>
   name: TField
   options: ReadonlyArray<TOption>
   valueKey?: Extract<keyof TOption, string>

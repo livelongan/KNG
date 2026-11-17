@@ -8,8 +8,10 @@ import { lightPaletteConfig } from './light-palette';
 export function createAppTheme(mode: PaletteMode) {
   const paletteConfig = mode === 'dark' ? darkPaletteConfig : lightPaletteConfig;
 
-  const { palette, appBarBackgroundImage, cardBackgroundImage, inputLabelColor } =
-    paletteConfig;
+  const { palette, custom } = paletteConfig;
+  const appBarBackgroundImage = custom.barBackground;
+  const cardBackgroundImage = custom.cardBackground;
+  const inputLabelColor = palette.text.secondary;
   const { input, label } = formThemeConfig;
   const rootFontSize = 16;
   const globalLineHeight = 1.5;

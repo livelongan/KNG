@@ -1,9 +1,9 @@
-import type { FormStore } from './use-form'
+import type { FormInstance } from './use-form'
 
 type FormValues = Record<string, unknown>
 
 type FormFieldMemoProps<TValues extends FormValues> = {
-    store: FormStore<TValues>
+    store: FormInstance<TValues>
     name: Extract<keyof TValues, string>
 } & Record<string, unknown>
 

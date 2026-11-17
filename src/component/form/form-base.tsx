@@ -1,7 +1,7 @@
 import ClearRoundedIcon from '@mui/icons-material/ClearRounded'
 import { IconButton, InputAdornment, type TextFieldProps } from '@mui/material'
 import { useMemo, type ReactNode } from 'react'
-import type { FormStore } from './use-form'
+import type { FormInstance } from './use-form'
 
 type FormValues = Record<string, unknown>
 type GenericSlotProps = Record<string, unknown>
@@ -64,7 +64,7 @@ export type FormBaseProps<
   TValues extends FormValues,
   TField extends FormFieldName<TValues> = FormFieldName<TValues>,
 > = {
-  store: FormStore<TValues>
+  store: FormInstance<TValues>
   name: TField
   slotProps?: TextFieldProps['slotProps']
   clearable?: boolean
@@ -132,7 +132,7 @@ export const FormBase = <
   const onFieldChange = (nextValue: string) => {
     setValue(name, nextValue as TValues[TField])
     if (errorMessage !== undefined) {
-      setError(name, undefined)
+      setError(name, null)
     }
     onChange?.(nextValue)
   }
@@ -151,7 +151,7 @@ export const FormBase = <
     }
     setValue(name, '' as TValues[TField])
     if (errorMessage !== undefined) {
-      setError(name, undefined)
+      setError(name, null)
     }
   }
 

@@ -13,7 +13,7 @@ import {
 import { memo, useMemo, type ReactNode } from 'react'
 import type { FormTextName } from './form-base'
 import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormStore } from './use-form'
+import type { FormInstance } from './use-form'
 
 type FormValues = Record<string, unknown>
 
@@ -28,7 +28,7 @@ export type FormRadioGroupProps<
   TValues extends FormValues,
   TField extends FormTextName<TValues> = FormTextName<TValues>,
 > = Omit<RadioGroupProps, 'name' | 'value' | 'onChange'> & {
-  store: FormStore<TValues>
+  store: FormInstance<TValues>
   name: TField
   label?: ReactNode
   options: ReadonlyArray<FormRadioOption<TValues[TField] & string>>
@@ -106,7 +106,7 @@ const FormRadioGroupBase = <
 
           setValue(name, nextValue as TValues[TField])
           if (errorMessage !== undefined) {
-            setError(name, undefined)
+            setError(name, null)
           }
           onValueChange?.(nextValue)
         }}
