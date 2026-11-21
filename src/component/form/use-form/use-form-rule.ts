@@ -118,8 +118,7 @@ export const useFormRule = <TValues extends KeyValue>(
   const getRule: FormHookHandle<TValues>["getRule"] = useCallback(
     (name) =>
       ruleStateRef.current[name] as
-        | FormRule<TValues[typeof name], TValues>
-        | undefined,
+        FormRule<TValues[typeof name], TValues> | undefined,
     [],
   );
 

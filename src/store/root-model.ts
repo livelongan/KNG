@@ -1,8 +1,8 @@
-import type { IAnyStateTreeNode, Instance, SnapshotOut } from 'mobx-state-tree';
-import { getRoot, types } from 'mobx-state-tree';
-import { BaseStoreModel } from './store-model';
+import type { IAnyStateTreeNode, Instance, SnapshotOut } from "mobx-state-tree";
+import { getRoot, types } from "mobx-state-tree";
+import { BaseStoreModel } from "./store-model";
 
-export const RootStoreModel = types.model('RootStoreModel').props({
+export const RootStoreModel = types.model("RootStoreModel").props({
   baseStore: BaseStoreModel,
 });
 

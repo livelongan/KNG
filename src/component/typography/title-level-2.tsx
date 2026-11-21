@@ -1,5 +1,5 @@
-import { observer } from 'mobx-react-lite';
-import { TextNormal, type TextNormalProps } from './text-normal';
+import { observer } from "mobx-react-lite";
+import { TextNormal, type TextNormalProps } from "./text-normal";
 
 type TitleLevel2Props = TextNormalProps & { children: React.ReactNode };
 
@@ -8,9 +8,9 @@ export const TitleLevel2 = observer(
     return (
       <TextNormal
         variant="h2"
-        component={'h2'}
+        component={"h2"}
         {...props}
-        className={`title-level-2 ${className ?? ''}`.trim()}
+        className={`title-level-2 ${className ?? ""}`.trim()}
         replaceClassName
       >
         {children}

@@ -1,12 +1,12 @@
-import type { FormTextName } from './form-base';
-import { FormText, type FormTextProps } from './form-text';
+import type { FormTextName } from "./form-base";
+import { FormText, type FormTextProps } from "./form-text";
 
 type FormValues = Record<string, unknown>;
 
 export type FormEmailProps<
   TValues extends FormValues,
   TField extends FormTextName<TValues> = FormTextName<TValues>,
-> = Omit<FormTextProps<TValues, TField>, 'type'>;
+> = Omit<FormTextProps<TValues, TField>, "type">;
 
 export const FormEmail = <
   TValues extends FormValues,

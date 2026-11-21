@@ -1,5 +1,5 @@
-import CheckIcon from '@mui/icons-material/Check'
-import CheckBoxOutlineBlankSharpIcon from '@mui/icons-material/CheckBoxOutlineBlankSharp'
+import CheckIcon from "@mui/icons-material/Check";
+import CheckBoxOutlineBlankSharpIcon from "@mui/icons-material/CheckBoxOutlineBlankSharp";
 import {
   Box,
   Checkbox,
@@ -8,28 +8,38 @@ import {
   FormHelperText,
   type CheckboxProps,
   type FormControlLabelProps,
-} from '@mui/material'
-import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { FormBooleanName } from './form-base'
-import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormInstance } from './use-form'
+} from "@mui/material";
+import {
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import type { FormBooleanName } from "./form-base";
+import { areFormFieldPropsEqual } from "./form-field-memo";
+import type { FormInstance } from "./use-form";
 
-type FormValues = Record<string, unknown>
+type FormValues = Record<string, unknown>;
 
 export type FormCheckboxProps<
   TValues extends FormValues,
   TField extends FormBooleanName<TValues> = FormBooleanName<TValues>,
-> = Omit<CheckboxProps, 'name' | 'checked' | 'onChange' | 'required'> & {
-  store: FormInstance<TValues>
-  name: TField
-  label?: ReactNode
-  helperText?: ReactNode
-  required?: boolean
-  onCheckedChange?: (checked: boolean) => void
-  onFocus?: () => void
-  onBlur?: () => void
-  formControlLabelProps?: Omit<FormControlLabelProps, 'control' | 'label' | 'disabled'>
-}
+> = Omit<CheckboxProps, "name" | "checked" | "onChange" | "required"> & {
+  store: FormInstance<TValues>;
+  name: TField;
+  label?: ReactNode;
+  helperText?: ReactNode;
+  required?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
+  formControlLabelProps?: Omit<
+    FormControlLabelProps,
+    "control" | "label" | "disabled"
+  >;
+};
 
 const FormCheckboxBase = <
   TValues extends FormValues,
@@ -47,8 +57,8 @@ const FormCheckboxBase = <
   formControlLabelProps,
   ...checkboxProps
 }: FormCheckboxProps<TValues, TField>) => {
-  const formControlLabelRef = useRef<HTMLLabelElement | null>(null)
-  const [isLabelWrapped, setIsLabelWrapped] = useState(false)
+  const formControlLabelRef = useRef<HTMLLabelElement | null>(null);
+  const [isLabelWrapped, setIsLabelWrapped] = useState(false);
 
   const {
     values,
@@ -58,84 +68,89 @@ const FormCheckboxBase = <
     formError: formErrorStore,
     formField: formFieldStore,
     formValue: formValueStore,
-  } = store
-  const getRuleValue = formRuleStore.ruleValue
-  const setError = formErrorStore.set
-  const setFieldBlur = formFieldStore.blur
-  const setFieldFocus = formFieldStore.focus
-  const setValue = formValueStore.set
+  } = store;
+  const getRuleValue = formRuleStore.ruleValue;
+  const setError = formErrorStore.set;
+  const setFieldBlur = formFieldStore.blur;
+  const setFieldFocus = formFieldStore.focus;
+  const setValue = formValueStore.set;
 
-  const ruleProps = rules[name]
-  const checked = Boolean(values[name])
-  const errorMessage = errors[name]
-  const hasError = Boolean(errorMessage)
-  const helperTextContent = errorMessage ?? helperText
+  const ruleProps = rules[name];
+  const checked = Boolean(values[name]);
+  const errorMessage = errors[name];
+  const hasError = Boolean(errorMessage);
+  const helperTextContent = errorMessage ?? helperText;
   const required = useMemo(
     () => Boolean(getRuleValue(ruleProps?.required)) || Boolean(requiredProp),
     [getRuleValue, requiredProp, ruleProps],
-  )
+  );
   const borderStyle = {
-    borderColor: hasError ? 'var(--error-main)' : 'var(--divider)',
-    '&:hover': { borderColor: hasError ? 'var(--error-dark)' : 'var(--text-primary)' },
-    '&:focus-within': { borderColor: hasError ? 'var(--error-main)' : 'var(--primary-main)' },
-  }
+    borderColor: hasError ? "var(--error-main)" : "var(--divider)",
+    "&:hover": {
+      borderColor: hasError ? "var(--error-dark)" : "var(--text-primary)",
+    },
+    "&:focus-within": {
+      borderColor: hasError ? "var(--error-main)" : "var(--primary-main)",
+    },
+  };
 
   useEffect(() => {
-    const labelElement = formControlLabelRef.current?.querySelector<HTMLElement>(
-      '.MuiFormControlLabel-label',
-    )
+    const labelElement =
+      formControlLabelRef.current?.querySelector<HTMLElement>(
+        ".MuiFormControlLabel-label",
+      );
 
     if (!labelElement) {
-      setIsLabelWrapped(false)
-      return
+      setIsLabelWrapped(false);
+      return;
     }
 
     const updateWrapState = () => {
-      const computedStyle = window.getComputedStyle(labelElement)
-      const lineHeight = Number.parseFloat(computedStyle.lineHeight || '0')
+      const computedStyle = window.getComputedStyle(labelElement);
+      const lineHeight = Number.parseFloat(computedStyle.lineHeight || "0");
 
       if (!Number.isFinite(lineHeight) || lineHeight <= 0) {
-        setIsLabelWrapped(false)
-        return
+        setIsLabelWrapped(false);
+        return;
       }
 
-      const renderedHeight = labelElement.getBoundingClientRect().height
-      setIsLabelWrapped(renderedHeight > lineHeight + 1)
-    }
+      const renderedHeight = labelElement.getBoundingClientRect().height;
+      setIsLabelWrapped(renderedHeight > lineHeight + 1);
+    };
 
-    updateWrapState()
+    updateWrapState();
     const resizeObserver = new ResizeObserver(() => {
-      updateWrapState()
-    })
-    resizeObserver.observe(labelElement)
+      updateWrapState();
+    });
+    resizeObserver.observe(labelElement);
 
-    window.addEventListener('resize', updateWrapState)
+    window.addEventListener("resize", updateWrapState);
 
     return () => {
-      resizeObserver.disconnect()
-      window.removeEventListener('resize', updateWrapState)
-    }
-  }, [label])
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateWrapState);
+    };
+  }, [label]);
 
   return (
     <FormControl error={hasError} required={required} disabled={disabled}>
       <Box
         sx={{
-          border: '1px solid',
-          borderRadius: 'var(--border-radius)',
-          '& .MuiFormControlLabel-root': {
-            alignItems: isLabelWrapped ? 'flex-start' : 'center',
-            width: '100%',
+          border: "1px solid",
+          borderRadius: "var(--border-radius)",
+          "& .MuiFormControlLabel-root": {
+            alignItems: isLabelWrapped ? "flex-start" : "center",
+            width: "100%",
             marginLeft: 0,
             marginRight: 0,
-            display: 'flex',
+            display: "flex",
           },
-          '& .MuiFormControlLabel-label': { minWidth: 0, flex: 1 },
-          transition: 'border-color 180ms ease, background-color 180ms ease',
+          "& .MuiFormControlLabel-label": { minWidth: 0, flex: 1 },
+          transition: "border-color 180ms ease, background-color 180ms ease",
           ...(disabled
             ? {
-                borderColor: 'var(--action-disabled)',
-                backgroundColor: 'var(--background-disabled)',
+                borderColor: "var(--action-disabled)",
+                backgroundColor: "var(--background-disabled)",
               }
             : borderStyle),
         }}
@@ -155,28 +170,30 @@ const FormCheckboxBase = <
               required={required}
               disabled={disabled}
               onChange={(_, nextChecked) => {
-                setValue(name, nextChecked as TValues[TField])
-                setError(name, null)
-                onCheckedChange?.(nextChecked)
+                setValue(name, nextChecked as TValues[TField]);
+                setError(name, null);
+                onCheckedChange?.(nextChecked);
               }}
               onFocus={() => {
-                setFieldFocus(name)
-                onFocus?.()
+                setFieldFocus(name);
+                onFocus?.();
               }}
               onBlur={() => {
-                setFieldBlur(name)
-                onBlur?.()
+                setFieldBlur(name);
+                onBlur?.();
               }}
             />
           }
         />
       </Box>
-      {helperTextContent ? <FormHelperText>{helperTextContent}</FormHelperText> : null}
+      {helperTextContent ? (
+        <FormHelperText>{helperTextContent}</FormHelperText>
+      ) : null}
     </FormControl>
-  )
-}
+  );
+};
 
 export const FormCheckbox = memo(
   FormCheckboxBase,
   areFormFieldPropsEqual,
-) as typeof FormCheckboxBase
+) as typeof FormCheckboxBase;

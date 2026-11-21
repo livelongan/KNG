@@ -1,16 +1,16 @@
-import type { SnapshotOut } from 'mobx-state-tree';
-import { types } from 'mobx-state-tree';
+import type { SnapshotOut } from "mobx-state-tree";
+import { types } from "mobx-state-tree";
 
-const THEME_MODE_STORAGE_KEY = 'theme-mode';
+const THEME_MODE_STORAGE_KEY = "theme-mode";
 
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = "light" | "dark";
 
 function isThemeMode(value: string | null): value is ThemeMode {
-  return value === 'light' || value === 'dark';
+  return value === "light" || value === "dark";
 }
 
 function persistThemeMode(mode: ThemeMode) {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
 
@@ -22,8 +22,8 @@ function persistThemeMode(mode: ThemeMode) {
 }
 
 export function getInitialThemeMode(): ThemeMode {
-  if (typeof window === 'undefined') {
-    return 'light';
+  if (typeof window === "undefined") {
+    return "light";
   }
 
   const cachedMode = localStorage.getItem(THEME_MODE_STORAGE_KEY);
@@ -31,15 +31,17 @@ export function getInitialThemeMode(): ThemeMode {
     return cachedMode;
   }
 
-  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-  return prefersDark ? 'dark' : 'light';
+  const prefersDark = window.matchMedia?.(
+    "(prefers-color-scheme: dark)",
+  ).matches;
+  return prefersDark ? "dark" : "light";
 }
 
 export const BaseStoreModel = types
-  .model('BaseStoreModel')
+  .model("BaseStoreModel")
   .props({
     language: types.string,
-    themeMode: types.enumeration<ThemeMode>('ThemeMode', ['light', 'dark']),
+    themeMode: types.enumeration<ThemeMode>("ThemeMode", ["light", "dark"]),
   })
   .views(() => ({}))
   .actions((self) => ({
@@ -48,7 +50,7 @@ export const BaseStoreModel = types
       persistThemeMode(mode);
     },
     toggleThemeMode() {
-      const nextMode = self.themeMode === 'light' ? 'dark' : 'light';
+      const nextMode = self.themeMode === "light" ? "dark" : "light";
       self.themeMode = nextMode;
       persistThemeMode(nextMode);
     },

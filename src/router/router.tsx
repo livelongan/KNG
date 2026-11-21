@@ -1,15 +1,19 @@
-import { Box } from '@mui/material';
-import { createBrowserRouter, createRoutesFromElements, Route } from 'react-router-dom';
-import { Loading } from '../component';
-import { AppLayout } from '../layout/app-layout';
-import { routeConfig } from './config';
+import { Box } from "@mui/material";
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Route,
+} from "react-router-dom";
+import { Loading } from "../component";
+import { AppLayout } from "../layout/app-layout";
+import { routeConfig } from "./config";
 
 const RouterHydrateFallback = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        position: 'relative',
+        minHeight: "100vh",
+        position: "relative",
       }}
     >
       <Loading />
@@ -25,7 +29,7 @@ export const router = createBrowserRouter(
       hydrateFallbackElement={<RouterHydrateFallback />}
     >
       {routeConfig.map((route) =>
-        'index' in route ? (
+        "index" in route ? (
           <Route key="index" index lazy={route.lazy} />
         ) : (
           <Route key={route.path} path={route.path} lazy={route.lazy} />

@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
-import { createContext, createElement } from 'react';
-import { rootInit } from './root-init';
-import type { RootStore } from './root-model';
+import type { ReactNode } from "react";
+import { createContext, createElement } from "react";
+import { rootInit } from "./root-init";
+import type { RootStore } from "./root-model";
 
 type RootStoreProviderProps = {
   children: ReactNode;

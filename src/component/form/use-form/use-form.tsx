@@ -179,7 +179,7 @@ export const useForm = <TValues extends KeyValue>(
           validated: true,
           valid: !hasErrors,
           invalid: hasErrors,
-          submitable: !hasErrors,
+          submittable: !hasErrors,
         }));
         return fieldError === undefined;
       }
@@ -203,22 +203,22 @@ export const useForm = <TValues extends KeyValue>(
         validated: true,
         valid: !hasErrors,
         invalid: hasErrors,
-        submitable: !hasErrors,
+        submittable: !hasErrors,
       }));
       return Object.keys(nextErrors).length === 0;
     },
     [formError, formField, formRule.data, setFormState, validateField],
   );
 
-  const submitableEvaluationIdRef = useRef(0);
+  const submittableEvaluationIdRef = useRef(0);
   const triggerChangedFieldRef = useRef(
     (name: keyof TValues) => void trigger(name),
   );
-  const submittedRef = useRef(Boolean(formState.data.submitted));
+  const submitAttemptedRef = useRef(Boolean(formState.data.submitAttempted));
 
   useEffect(() => {
-    const evaluationId = submitableEvaluationIdRef.current + 1;
-    submitableEvaluationIdRef.current = evaluationId;
+    const evaluationId = submittableEvaluationIdRef.current + 1;
+    submittableEvaluationIdRef.current = evaluationId;
 
     const validationFieldNames = Object.keys(formRule.data) as Array<
       keyof TValues
@@ -226,9 +226,9 @@ export const useForm = <TValues extends KeyValue>(
 
     if (validationFieldNames.length === 0) {
       setFormState((previousState) =>
-        previousState.submitable === true
+        previousState.submittable === true
           ? previousState
-          : { ...previousState, submitable: true },
+          : { ...previousState, submittable: true },
       );
       return;
     }
@@ -237,7 +237,7 @@ export const useForm = <TValues extends KeyValue>(
       validationFieldNames.map((fieldName) => validateField(fieldName)),
     )
       .then((validationErrors) => {
-        if (submitableEvaluationIdRef.current !== evaluationId) {
+        if (submittableEvaluationIdRef.current !== evaluationId) {
           return;
         }
 
@@ -246,27 +246,27 @@ export const useForm = <TValues extends KeyValue>(
         );
 
         setFormState((previousState) =>
-          previousState.submitable === canSubmit
+          previousState.submittable === canSubmit
             ? previousState
-            : { ...previousState, submitable: canSubmit },
+            : { ...previousState, submittable: canSubmit },
         );
       })
       .catch(() => {
-        if (submitableEvaluationIdRef.current !== evaluationId) {
+        if (submittableEvaluationIdRef.current !== evaluationId) {
           return;
         }
 
         setFormState((previousState) =>
-          previousState.submitable === false
+          previousState.submittable === false
             ? previousState
-            : { ...previousState, submitable: false },
+            : { ...previousState, submittable: false },
         );
       });
   }, [formRule.data, setFormState, validateField]);
 
   useLayoutEffect(() => {
-    submittedRef.current = Boolean(formState.data.submitted);
-  }, [formState.data.submitted]);
+    submitAttemptedRef.current = Boolean(formState.data.submitAttempted);
+  }, [formState.data.submitAttempted]);
 
   useLayoutEffect(() => {
     triggerChangedFieldRef.current = (fieldName) => {
@@ -278,7 +278,7 @@ export const useForm = <TValues extends KeyValue>(
 
   useEffect(() => {
     const unsubscribe = subscribeValueChange((_nextValues, context) => {
-      if (!submittedRef.current) {
+      if (!submitAttemptedRef.current) {
         return;
       }
 

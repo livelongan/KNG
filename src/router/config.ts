@@ -2,8 +2,8 @@ import type {
   IndexRouteObject,
   LazyRouteFunction,
   NonIndexRouteObject,
-} from 'react-router-dom';
-import { lazying } from './lazy-route';
+} from "react-router-dom";
+import { lazying } from "./lazy-route";
 
 type ChildRouteConfig =
   | {
@@ -18,14 +18,14 @@ type ChildRouteConfig =
 export const routeConfig: ChildRouteConfig[] = [
   {
     index: true,
-    lazy: lazying('../page/home', 'HomePage'),
+    lazy: lazying("../page/home", "HomePage"),
   },
   {
-    path: 'about',
-    lazy: lazying('../page/about', 'AboutPage'),
+    path: "about",
+    lazy: lazying("../page/about", "AboutPage"),
   },
   {
-    path: 'form-demo',
-    lazy: lazying('../page/form-demo', 'FormDemoPage'),
+    path: "form-demo",
+    lazy: lazying("../page/form-demo", "FormDemoPage"),
   },
 ];

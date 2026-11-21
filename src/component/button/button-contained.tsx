@@ -1,6 +1,6 @@
-import { observer } from 'mobx-react-lite';
-import { ButtonNormal } from './button-normal';
-import type { ButtonNormalProps } from './button-normal';
+import { observer } from "mobx-react-lite";
+import { ButtonNormal } from "./button-normal";
+import type { ButtonNormalProps } from "./button-normal";
 
 type ButtonContainedProps = ButtonNormalProps & { children: React.ReactNode };
 
@@ -9,7 +9,7 @@ export const ButtonContained = observer(
     <ButtonNormal
       variant="contained"
       {...props}
-      className={`button-contained ${className ?? ''}`.trim()}
+      className={`button-contained ${className ?? ""}`.trim()}
     >
       {children}
     </ButtonNormal>
