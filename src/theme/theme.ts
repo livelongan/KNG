@@ -102,6 +102,10 @@ export function createAppTheme(mode: PaletteMode) {
           "button, input, textarea, select": {
             fontFamily: appFontFamily,
           },
+          'input, textarea, [contenteditable="true"]': {
+            /* 光标颜色 */
+            caretColor: palette.primary.main,
+          },
         },
       },
       MuiSvgIcon: {
