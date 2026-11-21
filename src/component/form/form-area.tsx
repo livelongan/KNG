@@ -1,53 +1,87 @@
-import { TextField } from '@mui/material';
-import type { TextFieldProps } from '@mui/material';
-import type { FormStore } from '../../hook';
-import { FormBase, type FormTextName } from './form-base';
+import { TextField, type TextFieldProps } from '@mui/material'
+import { memo } from 'react'
+import { FormBase, type FormTextName } from './form-base'
+import { areFormFieldPropsEqual } from './form-field-memo'
+import type { FormInstance } from './use-form'
 
-type FormValues = Record<string, unknown>;
+type FormValues = Record<string, unknown>
 
 export type FormAreaProps<
-  TValues extends FormValues,
-  TField extends FormTextName<TValues> = FormTextName<TValues>,
-> = Omit<TextFieldProps, 'type' | 'multiline' | 'name' | 'value' | 'onChange'> & {
-  store: FormStore<TValues>;
-  name: TField;
-  clearable?: boolean;
-  onClear?: () => void;
-};
+    TValues extends FormValues,
+    TField extends FormTextName<TValues> = FormTextName<TValues>,
+> = Omit<TextFieldProps, 'type' | 'multiline'> & {
+    store: FormInstance<TValues>
+    name: TField
+    clearable?: boolean
+    onClear?: () => void
+}
 
-export const FormArea = <
-  TValues extends FormValues,
-  TField extends FormTextName<TValues> = FormTextName<TValues>,
+const FormAreaBase = <
+    TValues extends FormValues,
+    TField extends FormTextName<TValues> = FormTextName<TValues>,
 >({
-  store,
-  name,
-  clearable = true,
-  onClear,
-  slotProps,
-  ...props
-}: FormAreaProps<TValues, TField>) => (
-  <FormBase<TValues, TField>
-    store={store}
-    name={name}
-    clearable={clearable}
-    onClear={onClear}
-    slotProps={slotProps}
-  >
-    {(field) => (
-      <TextField
-        {...props}
-        fullWidth
-        multiline
-        name={field.name}
-        value={field.value}
-        error={Boolean(field.errorMessage)}
-        helperText={field.errorMessage ?? props.helperText}
-        required={field.required}
-        onChange={(event) => field.onFieldChange(event.target.value)}
-        onFocus={field.onFieldFocus}
-        onBlur={field.onFieldBlur}
-        slotProps={field.slotProps}
-      />
-    )}
-  </FormBase>
-);
+    store,
+    name,
+    clearable = true,
+    onClear,
+    slotProps,
+    onChange,
+    onFocus,
+    onBlur,
+    helperText,
+    error,
+    required: requiredProp,
+    disabled,
+    rows: rowsProp,
+    ...textFieldProps
+}: FormAreaProps<TValues, TField>) => {
+    return (
+        <FormBase
+            store={store}
+            name={name}
+            slotProps={slotProps}
+            clearable={clearable}
+            disabled={disabled}
+            onClear={onClear}
+        >
+            {({
+                name: fieldName,
+                value,
+                errorMessage,
+                required,
+                rows,
+                slotProps: mergedSlotProps,
+                onFieldChange,
+                onFieldFocus,
+                onFieldBlur,
+            }) => (
+                <TextField
+                    {...textFieldProps}
+                    multiline
+                    name={fieldName}
+                    value={value}
+                    rows={rows ?? rowsProp}
+                    error={Boolean(errorMessage) || Boolean(error)}
+                    helperText={errorMessage ?? helperText}
+                    required={required || Boolean(requiredProp)}
+                    disabled={disabled}
+                    onChange={(event) => {
+                        onFieldChange(event.target.value)
+                        onChange?.(event)
+                    }}
+                    onFocus={(event) => {
+                        onFieldFocus()
+                        onFocus?.(event)
+                    }}
+                    onBlur={(event) => {
+                        onFieldBlur()
+                        onBlur?.(event)
+                    }}
+                    slotProps={mergedSlotProps}
+                />
+            )}
+        </FormBase>
+    )
+}
+
+export const FormArea = memo(FormAreaBase, areFormFieldPropsEqual) as typeof FormAreaBase

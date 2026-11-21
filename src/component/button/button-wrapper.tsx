@@ -5,7 +5,7 @@ type IProps = { children: React.ReactNode };
 
 export const ButtonWrapper = observer(({ children }: IProps) => {
   return (
-    <Stack direction="row" spacing={2}>
+    <Stack direction="row" spacing={2} sx={{alignItem: 'center'}}>
       {children}
     </Stack>
   );

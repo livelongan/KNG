@@ -1,68 +1,117 @@
-import { CircularProgress } from '@mui/material';
-import { observer } from 'mobx-react-lite';
-import { useEffect, useState } from 'react';
+import { Stack } from '@mui/material'
 import {
   FormCheckbox,
-  FormDate,
-  FormDigital,
+  FormDropdown,
   FormElement,
   FormEmail,
+  FormNumeric,
+  FormPeriod,
   FormRadioGroup,
-  FormSelect,
   FormText,
   TextNormal,
+  TextSmall,
   TitleLevel1,
-} from '../component';
-import { ButtonContained, ButtonOutline, ButtonWrapper } from '../component/button';
-import { useForm, type FormRules } from '../hook';
+  type FormSelectOption,
+} from '../component'
+import { ButtonContained, ButtonOutlined, ButtonWrapper } from '../component/button'
+import { useForm, type FormRules } from '../component/form'
 
 type FormValues = {
-  name: string;
-  email: string;
-  age: string;
-  birthday: Date | null;
-  role: string;
-  gender: string;
-  acceptPolicy: boolean;
-};
+  name: string
+  email: string
+  age: number
+  birthday: Date | null
+  appointmentAt: string
+  role: string
+  remoteRole: string
+  gender: string
+  acceptPolicy: boolean
+}
+type ValidationField = 'name' | 'email' | 'age' | 'birthday' | 'acceptPolicy'
 
-type ValidationField = keyof FormValues;
-
-const validationFieldOrder: ValidationField[] = [
-  'name',
-  'email',
-  'age',
-  'birthday',
-  'acceptPolicy',
-];
-const nameMinLength = 3;
-const nameMaxLength = 30;
-const ageMin = 1;
-const ageMax = 120;
-const ageStep = 1;
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const formDefaultValues: FormValues = {
+const validationFieldOrder: ValidationField[] = ['name', 'email', 'age', 'birthday', 'acceptPolicy']
+const nameMinLength = 2
+const nameMaxLength = 30
+const ageMin = 1
+const ageMax = 120
+const ageStep = 1
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const formDefaultValues = {
   name: 'Tony King',
   email: 'tony.king@example.com',
-  age: '18',
+  age: 18,
   birthday: new Date(2000, 0, 1),
+  appointmentAt: '',
   role: 'user',
+  remoteRole: '',
   gender: 'male',
   acceptPolicy: true,
-};
+}
+const roleOptions: ReadonlyArray<FormSelectOption> = [
+  { value: 'user', name: 'User' },
+  { value: 'admin', name: 'Admin' },
+  { value: 'guest', name: 'Guest', disabled: true },
+] as const
 
-const roleOptions = [
-  { id: 'user', name: 'User', enabled: true },
-  { id: 'admin', name: 'Admin', enabled: true },
-  { id: 'guest', name: 'Guest', enabled: false },
-] as const;
+const remoteRoleDirectory: ReadonlyArray<FormSelectOption> = [
+  { value: 'frontend-engineer', name: 'Frontend Engineer' },
+  { value: 'backend-engineer', name: 'Backend Engineer' },
+  { value: 'fullstack-engineer', name: 'Fullstack Engineer' },
+  { value: 'mobile-engineer', name: 'Mobile Engineer' },
+  { value: 'devops-engineer', name: 'DevOps Engineer' },
+  { value: 'qa-engineer', name: 'QA Engineer' },
+  { value: 'site-reliability-engineer', name: 'Site Reliability Engineer' },
+  { value: 'cloud-architect', name: 'Cloud Architect' },
+  { value: 'data-engineer', name: 'Data Engineer' },
+  { value: 'data-analyst', name: 'Data Analyst' },
+  { value: 'security-engineer', name: 'Security Engineer' },
+  { value: 'product-manager', name: 'Product Manager' },
+  { value: 'ux-designer', name: 'UX Designer' },
+] as const
+
+const emptyRemoteRoleOptions: ReadonlyArray<FormSelectOption> = []
+const remoteSearchDelayMs = 600
+
+const simulateRemoteRoleSearch = (
+  keyword: string,
+  context: { signal: AbortSignal },
+): Promise<ReadonlyArray<FormSelectOption>> => {
+  const normalizedKeyword = keyword.trim().toLowerCase()
+
+  return new Promise((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timerId)
+      context.signal.removeEventListener('abort', onAbort)
+      reject(new Error('Remote search aborted'))
+    }
+
+    const timerId = setTimeout(() => {
+      context.signal.removeEventListener('abort', onAbort)
+
+      if (context.signal.aborted) {
+        reject(new Error('Remote search aborted'))
+        return
+      }
+
+      const filteredOptions = remoteRoleDirectory.filter((option) => {
+        const optionName = String(option.name ?? '').toLowerCase()
+        const optionValue = String(option.value ?? '').toLowerCase()
+
+        return optionName.includes(normalizedKeyword) || optionValue.includes(normalizedKeyword)
+      })
+
+      resolve(filteredOptions)
+    }, remoteSearchDelayMs)
+
+    context.signal.addEventListener('abort', onAbort)
+  })
+}
 
 const genderOptions = [
   { value: 'male', label: 'Male' },
   { value: 'female', label: 'Female' },
   { value: 'other', label: 'Other' },
-] as const;
+] as const
 
 const formValidationRules: FormRules<FormValues> = {
   name: {
@@ -75,6 +124,7 @@ const formValidationRules: FormRules<FormValues> = {
       value: nameMaxLength,
       message: `Name must be between ${String(nameMinLength)} and ${String(nameMaxLength)} characters.`,
     },
+    autoComplete: 'name',
   },
   email: {
     required: { value: true, message: 'Email is required.' },
@@ -93,138 +143,150 @@ const formValidationRules: FormRules<FormValues> = {
       message: `Age must be an integer between ${String(ageMin)} and ${String(ageMax)}.`,
     },
     validate: (value) => {
-      const numberValue = Number(value);
+      const numberValue = Number(value)
       if (!Number.isInteger(numberValue)) {
-        return `Age must be an integer between ${String(ageMin)} and ${String(ageMax)}.`;
+        return `Age must be an integer between ${String(ageMin)} and ${String(ageMax)}.`
       }
-      return true;
+      return true
     },
     step: ageStep,
     inputMode: 'numeric',
   },
   birthday: { required: { value: true, message: 'Birthday is required.' } },
-  role: {
-    required: { value: true, message: 'Role is required.' },
-    filter: (option, context) => option.value !== 'guest' && context.options.length > 0,
-    keywordFilter: true,
-    keywordFilterPlaceholder: 'Filter role by keyword',
-  },
   acceptPolicy: {
     required: { value: true, message: 'Please agree to the policy before submitting.' },
   },
-};
+}
+const submitDelayMs = 1800
 
-const formId = 'form-demo';
-const submitDelayMs = 1800;
-
-const createInitialFormValues = (): FormValues => ({ ...formDefaultValues });
-
-const FormActions = ({
-  onReset,
-  submitting,
-}: {
-  onReset: () => void;
-  submitting: boolean;
-}) => {
-  const loading = submitting;
-  return (
-    <ButtonWrapper>
-      <ButtonContained
-        type="submit"
-        disabled={loading}
-        startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
-      >
-        Submit
-      </ButtonContained>
-      <ButtonOutline type="reset" disabled={loading} onClick={onReset}>
-        Reset
-      </ButtonOutline>
-    </ButtonWrapper>
-  );
-};
-
-export const FormDemoPage = observer(() => {
-  const [submitted, setSubmitted] = useState(false);
+export const FormDemoPage = () => {
   const formStore = useForm<FormValues>({
-    defaultValues: createInitialFormValues(),
+    defaultValues: { ...formDefaultValues },
     rules: formValidationRules,
-  });
-  const { values, formStatus, hook } = formStore;
-  const firstErrorField = validationFieldOrder.find((fieldName) =>
-    Boolean(formStore.errors[fieldName]),
-  );
-  const firstErrorMessage = firstErrorField ? formStore.errors[firstErrorField] : null;
+  })
+  const { values, errors } = formStore
+  const formState = formStore.formState.data
 
-  useEffect(() => {
-    const unsubscribe = hook.subscribe(() => setSubmitted(false));
-    return unsubscribe;
-  }, [hook]);
+  const firstErrorField = validationFieldOrder.find((fieldName) => Boolean(errors[fieldName]))
+  const firstErrorMessage = firstErrorField ? (errors[firstErrorField] ?? null) : null
 
   const handleSubmit = async () => {
-    setSubmitted(false);
-    const valid = await hook.trigger();
-    if (!valid) return;
-
     const submittedValues = {
-      ...values,
       name: values.name.trim(),
       email: values.email.trim(),
-    };
-    console.log('Form submitted data:', submittedValues);
-    await new Promise<void>((resolve) => setTimeout(resolve, submitDelayMs));
-    setSubmitted(true);
-  };
+      age: values.age,
+      birthday: values.birthday,
+      appointmentAt: values.appointmentAt,
+      role: values.role,
+      remoteRole: values.remoteRole,
+      gender: values.gender,
+      acceptPolicy: values.acceptPolicy,
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, submitDelayMs)
+    })
+    console.log('Form submitted data:', submittedValues)
+  }
 
   const handleReset = () => {
-    setSubmitted(false);
-    hook.resetErrors();
-    hook.resetFieldStatus();
-    hook.resetRules();
-    hook.resetValues();
-  };
+    formStore.reset()
+  }
 
   return (
-    <FormElement id={formId} spacing={2} store={formStore} onSubmit={handleSubmit}>
-      <TitleLevel1 variant="h4">Form Demo</TitleLevel1>
-      <FormText store={formStore} name="name" label="Name" />
-      <FormEmail store={formStore} name="email" label="Email" />
-      <FormDigital store={formStore} name="age" label="Age" />
-      <FormDate
+    <FormElement store={formStore} onSubmit={handleSubmit}>
+      <TitleLevel1>Personal Information</TitleLevel1>
+      <FormText
+        store={formStore}
+        name="name"
+        label="Name"
+        helperText="Please enter your full name"
+      />
+      <TextNormal>Enter your personal information below:</TextNormal>
+      <FormEmail
+        store={formStore}
+        name="email"
+        label="Email"
+        helperText="Please enter your email address"
+      />
+      <FormNumeric store={formStore} name="age" label="Age" helperText="Please enter your age" />
+      <TextNormal>Enter your date of birth and appointment time:</TextNormal>
+      <FormPeriod
         store={formStore}
         name="birthday"
         label="Birthday"
-        storageFormat="is-date"
+        storageFormat="js-date"
+        format="YYYY-MM-DD"
       />
-      <FormSelect
+      <FormPeriod
+        store={formStore}
+        name="appointmentAt"
+        label="Appointment Time"
+        format="YYYY-MM-DD HH:mm:ss"
+      />
+      <FormDropdown
         store={formStore}
         name="role"
         label="Role"
-        options={roleOptions.map((option) => ({
-          value: option.id,
-          label: option.name,
-          disabled: !option.enabled,
-        }))}
+        options={roleOptions}
+        valueKey="value"
+        labelKey="name"
+        renderOptionItem={(_option, context) => (
+          <Stack direction={'row'} sx={{ justifyContent: 'space-between', gap: 1 }}>
+            <TextNormal>{context.label}</TextNormal>
+            <TextSmall>{String(context.value ?? '')}</TextSmall>
+          </Stack>
+        )}
       />
-      <FormCheckbox store={formStore} name="acceptPolicy" label="I agree to the policy" />
-      <FormRadioGroup
+      <FormDropdown
         store={formStore}
-        name="gender"
-        label="Gender"
-        options={genderOptions}
+        name="remoteRole"
+        label="Role (Remote Search)"
+        placeholder="Type at least 2 characters"
+        options={emptyRemoteRoleOptions}
+        valueKey="value"
+        labelKey="name"
+        remote={{
+          search: simulateRemoteRoleSearch,
+          debounceMs: 400,
+          minKeywordLength: 1,
+          minKeywordHint: 'Input keyword to start remote search',
+        }}
+        renderOptionItem={(_option, context) => (
+          <Stack direction={'row'} sx={{ justifyContent: 'space-between', gap: 1 }}>
+            <TextNormal>{context.label}</TextNormal>
+            <TextSmall>{String(context.value ?? '')}</TextSmall>
+          </Stack>
+        )}
       />
-      <FormActions submitting={Boolean(formStatus.submitting)} onReset={handleReset} />
+      <FormCheckbox
+        store={formStore}
+        name="acceptPolicy"
+        label="I agree to the policy"
+        helperText="You must agree to the policy"
+      />
+      <FormRadioGroup store={formStore} name="gender" label="Gender" options={genderOptions} />
       {firstErrorMessage && (
         <TextNormal variant="body2" color="error.main">
           {firstErrorMessage}
         </TextNormal>
       )}
-      {submitted && !firstErrorMessage && (
+      {formState.submitSuccess && !firstErrorMessage && (
         <TextNormal variant="body2" color="success.main">
           Form submitted.
         </TextNormal>
       )}
+      <ButtonWrapper>
+        <ButtonContained
+          type="submit"
+          disabled={!formState.submitable}
+          loading={formState.submitting}
+        >
+          Submit
+        </ButtonContained>
+        <ButtonOutlined type="reset" disabled={formState.submitting} onClick={handleReset}>
+          Reset
+        </ButtonOutlined>
+      </ButtonWrapper>
     </FormElement>
-  );
-});
-
-export const FormDemo = FormDemoPage;
+  )
+}
