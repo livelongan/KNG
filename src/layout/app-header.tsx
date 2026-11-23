@@ -24,6 +24,7 @@ type IProps = { loading?: boolean }
 
 const navItems = [
     { to: '/', label: 'Home' },
+    { to: '/ai-chat', label: 'AI Chat' },
     { to: '/about', label: 'About' },
     { to: '/form-demo', label: 'Form Demo' },
 ] as const

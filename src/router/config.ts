@@ -28,4 +28,8 @@ export const routeConfig: ChildRouteConfig[] = [
     path: 'form-demo',
     lazy: lazying('../page/form-demo', 'FormDemoPage'),
   },
+  {
+    path: 'ai-chat',
+    lazy: lazying('../page/ai-chat', 'AiChatPage'),
+  },
 ];
