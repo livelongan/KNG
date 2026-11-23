@@ -1,12 +1,18 @@
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded'
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded'
 import AddCommentRoundedIcon from '@mui/icons-material/AddCommentRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
+import AutoFixHighRoundedIcon from '@mui/icons-material/AutoFixHighRounded'
+import BoltRoundedIcon from '@mui/icons-material/BoltRounded'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import CodeRoundedIcon from '@mui/icons-material/CodeRounded'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded'
 import SendRoundedIcon from '@mui/icons-material/SendRounded'
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded'
 import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined'
+import { alpha } from '@mui/material/styles'
 import {
     Alert,
     Avatar,
@@ -30,7 +36,7 @@ import {
     Typography,
 } from '@mui/material'
 import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     createZhipuClient,
     FileWriteError,
@@ -42,9 +48,10 @@ import {
     type ProposedFileChange,
     type ZhipuModelInfo,
     type ZhipuMessage,
+    type ZhipuUsage,
 } from '../ai'
 
-import { TextSmall, TextSecondary, ButtonContained } from '../component'
+import { TextSmall, ButtonContained } from '../component'
 
 interface ChatMessage {
     id: string
@@ -54,6 +61,7 @@ interface ChatMessage {
     attachments?: string[]
     proposal?: ProposedFileChange[]
     proposalError?: string
+    usage?: ZhipuUsage
 }
 
 interface ContextFile {
@@ -88,6 +96,12 @@ const promptSuggestions = [
     '帮我生成一个 React 页面',
     '根据选中的文件提出改进建议',
 ]
+
+const suggestionIcons = [DescriptionOutlinedIcon, CodeRoundedIcon, AutoFixHighRoundedIcon]
+
+function formatTokenCount(value: number): string {
+    return value >= 10_000 ? `${(value / 1000).toFixed(1)}k` : value.toLocaleString('en-US')
+}
 
 function createMessageId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -188,6 +202,11 @@ export const AiChatPage = () => {
     const requestControllerRef = useRef<AbortController | null>(null)
     const modelRequestInProgressRef = useRef(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+
+    const sessionTokens = useMemo(
+        () => messages.reduce((total, message) => total + (message.usage?.total_tokens ?? 0), 0),
+        [messages],
+    )
 
     const loadModels = useCallback(async () => {
         if (modelRequestInProgressRef.current) {
@@ -331,7 +350,7 @@ export const AiChatPage = () => {
 
         try {
             const client = createZhipuClient({ baseUrl: '/api/zhipu', model })
-            const response = await client.chat({
+            const { content: response, usage } = await client.chat({
                 signal: controller.signal,
                 messages: [
                     { role: 'system', content: systemPrompt },
@@ -351,6 +370,7 @@ export const AiChatPage = () => {
                     apiContent: response,
                     proposal: parsed.proposal,
                     proposalError: parsed.error,
+                    usage,
                 },
             ])
         } catch (requestError) {
@@ -518,6 +538,29 @@ export const AiChatPage = () => {
                     </FormControl>
                 )}
                 <Box sx={{ flex: 1 }} />
+                {sessionTokens > 0 && (
+                    <Tooltip title="本次会话累计消耗的 token（来自 API 返回的 usage 统计）">
+                        <Chip
+                            size="small"
+                            variant="outlined"
+                            icon={<BoltRoundedIcon />}
+                            label={`会话 ${formatTokenCount(sessionTokens)} tokens`}
+                        />
+                    </Tooltip>
+                )}
+                <Tooltip title="智谱未开放余额查询接口，点击前往控制台财务总览查看剩余额度与资源包">
+                    <Chip
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        icon={<AccountBalanceWalletRoundedIcon />}
+                        label="剩余额度"
+                        onClick={() =>
+                            window.open('https://open.bigmodel.cn/finance/overview', '_blank')
+                        }
+                        sx={{ cursor: 'pointer' }}
+                    />
+                </Tooltip>
                 <IconButton
                     color="inherit"
                     sx={{
@@ -562,34 +605,69 @@ export const AiChatPage = () => {
                     >
                         <Avatar
                             sx={{
-                                bgcolor: 'action.hover',
-                                color: 'primary.main',
-                                width: 56,
-                                height: 56,
+                                width: 72,
+                                height: 72,
+                                background: (theme) =>
+                                    `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                                boxShadow: (theme) =>
+                                    `0 8px 24px ${alpha(theme.palette.primary.main, 0.28)}`,
                             }}
                         >
-                            <SmartToyRoundedIcon fontSize="large" />
+                            <SmartToyRoundedIcon sx={{ fontSize: 36 }} />
                         </Avatar>
                         <Box>
-                            <Typography variant="h6">有什么可以帮你？</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                输入问题，或附加代码文件 / 选择目录作为上下文。
+                            <Typography
+                                variant="h6"
+                                sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}
+                            >
+                                有什么可以帮你？
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                输入问题，或附加代码文件 / 选择目录作为上下文
                             </Typography>
                         </Box>
                         <Stack
                             direction="row"
                             spacing={1}
                             useFlexGap
-                            sx={{ flexWrap: 'wrap', justifyContent: 'center' }}
+                            sx={{ flexWrap: 'wrap', justifyContent: 'center', maxWidth: 560 }}
                         >
-                            {promptSuggestions.map((suggestion) => (
-                                <Chip
-                                    key={suggestion}
-                                    label={suggestion}
-                                    variant="outlined"
-                                    onClick={() => setDraft(suggestion)}
-                                />
-                            ))}
+                            {promptSuggestions.map((suggestion, index) => {
+                                const SuggestionIcon =
+                                    suggestionIcons[index] ?? AutoAwesomeRoundedIcon
+                                return (
+                                    <Paper
+                                        key={suggestion}
+                                        component="button"
+                                        type="button"
+                                        onClick={() => setDraft(suggestion)}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1,
+                                            px: 1.5,
+                                            py: 1,
+                                            borderRadius: 2,
+                                            border: '1px solid',
+                                            borderColor: 'divider',
+                                            bgcolor: 'background.paper',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            transition: 'all 180ms ease',
+                                            '&:hover': {
+                                                borderColor: 'primary.main',
+                                                boxShadow: 2,
+                                                transform: 'translateY(-2px)',
+                                            },
+                                        }}
+                                    >
+                                        <SuggestionIcon
+                                            sx={{ fontSize: 18, color: 'primary.main' }}
+                                        />
+                                        <Typography variant="body2">{suggestion}</Typography>
+                                    </Paper>
+                                )
+                            })}
                         </Stack>
                     </Stack>
                 ) : (
@@ -602,14 +680,21 @@ export const AiChatPage = () => {
                                 sx={{ alignItems: 'flex-start' }}
                             >
                                 <Avatar
-                                    sx={{
-                                        width: 32,
-                                        height: 32,
-                                        bgcolor:
-                                            message.role === 'user'
-                                                ? 'secondary.main'
-                                                : 'primary.main',
-                                    }}
+                                    sx={
+                                        message.role === 'user'
+                                            ? {
+                                                  width: 32,
+                                                  height: 32,
+                                                  bgcolor: 'primary.dark',
+                                                  fontSize: 13,
+                                              }
+                                            : {
+                                                  width: 32,
+                                                  height: 32,
+                                                  background: (theme) =>
+                                                      `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                                              }
+                                    }
                                 >
                                     {message.role === 'user' ? (
                                         '我'
@@ -620,17 +705,28 @@ export const AiChatPage = () => {
                                 <Box sx={{ maxWidth: 'min(88%, 820px)', minWidth: 0 }}>
                                     <Paper
                                         elevation={0}
-                                        sx={{
-                                            p: 1.5,
-                                            bgcolor:
-                                                message.role === 'user'
-                                                    ? 'action.selected'
-                                                    : 'action.hover',
-                                            borderRadius: 2,
-                                            overflowWrap: 'anywhere',
-                                        }}
+                                        sx={
+                                            message.role === 'user'
+                                                ? {
+                                                      px: 1.75,
+                                                      py: 1.25,
+                                                      bgcolor: 'primary.main',
+                                                      color: 'primary.contrastText',
+                                                      borderRadius: '16px 16px 4px 16px',
+                                                      overflowWrap: 'anywhere',
+                                                  }
+                                                : {
+                                                      p: 1.5,
+                                                      bgcolor: 'background.paper',
+                                                      border: '1px solid',
+                                                      borderColor: 'divider',
+                                                      borderRadius: '16px 16px 16px 4px',
+                                                      overflowWrap: 'anywhere',
+                                                  }
+                                        }
                                     >
-                                        <TextSecondary
+                                        <Typography
+                                            variant="body2"
                                             sx={{
                                                 whiteSpace: 'pre-wrap',
                                                 overflowWrap: 'anywhere',
@@ -640,7 +736,7 @@ export const AiChatPage = () => {
                                                 (message.role === 'assistant'
                                                     ? '已生成文件方案。'
                                                     : '')}
-                                        </TextSecondary>
+                                        </Typography>
                                         {message.attachments && message.attachments.length > 0 && (
                                             <Stack
                                                 direction="row"
@@ -654,12 +750,43 @@ export const AiChatPage = () => {
                                                         size="small"
                                                         icon={<AttachFileRoundedIcon />}
                                                         label={path}
-                                                        variant="outlined"
+                                                        sx={
+                                                            message.role === 'user'
+                                                                ? {
+                                                                      bgcolor:
+                                                                          'rgba(255,255,255,0.16)',
+                                                                      color: 'inherit',
+                                                                      '& .MuiChip-icon': {
+                                                                          color: 'inherit',
+                                                                      },
+                                                                  }
+                                                                : undefined
+                                                        }
                                                     />
                                                 ))}
                                             </Stack>
                                         )}
                                     </Paper>
+                                    {message.role === 'assistant' && message.usage && (
+                                        <Stack
+                                            direction="row"
+                                            spacing={0.5}
+                                            sx={{ mt: 0.5, px: 0.5, alignItems: 'center' }}
+                                        >
+                                            <BoltRoundedIcon
+                                                sx={{ fontSize: 14, color: 'text.disabled' }}
+                                            />
+                                            <Typography variant="caption" color="text.disabled">
+                                                输入 {formatTokenCount(message.usage.prompt_tokens)}
+                                                {' · '}输出{' '}
+                                                {formatTokenCount(message.usage.completion_tokens)}
+                                                {' · '}共{' '}
+                                                {formatTokenCount(message.usage.total_tokens)} tokens
+                                                {(message.usage.cached_tokens ?? 0) > 0 &&
+                                                    ` · 缓存命中 ${formatTokenCount(message.usage.cached_tokens ?? 0)}`}
+                                            </Typography>
+                                        </Stack>
+                                    )}
                                     {message.proposalError && (
                                         <Alert severity="warning" sx={{ mt: 1 }}>
                                             {message.proposalError}
@@ -715,7 +842,9 @@ export const AiChatPage = () => {
                         {isSending && (
                             <Stack direction="row" spacing={1} sx={{ pl: 5, alignItems: 'center' }}>
                                 <CircularProgress size={18} />
-                                <TextSecondary>AI 正在思考…</TextSecondary>
+                                <Typography variant="body2" color="text.secondary">
+                                    AI 正在思考…
+                                </Typography>
                             </Stack>
                         )}
                         <div ref={messagesEndRef} />
@@ -724,126 +853,183 @@ export const AiChatPage = () => {
             </Stack>
 
             <Divider />
-            <Stack sx={{ border: '1px solid red', borderRadius: 1, p: 1 }}>
-                <Box component="form" onSubmit={(event) => void handleSend(event)}>
-                    {error && (
-                        <Alert severity="error" onClose={() => setError('')} sx={{ mb: 1 }}>
-                            {error}
-                        </Alert>
-                    )}
-                    {notice && (
-                        <Alert severity="info" onClose={() => setNotice('')} sx={{ mb: 1 }}>
-                            {notice}
-                        </Alert>
-                    )}
-                    {contextFiles.length > 0 && (
-                        <Stack
-                            direction="row"
-                            spacing={0.75}
-                            useFlexGap
-                            sx={{ mb: 1, flexWrap: 'wrap' }}
-                        >
-                            {contextFiles.map((file) => (
-                                <Chip
-                                    key={file.path}
-                                    size="small"
-                                    icon={<AttachFileRoundedIcon />}
-                                    label={file.path}
-                                    onDelete={() =>
-                                        setContextFiles((current) =>
-                                            current.filter((item) => item.path !== file.path),
-                                        )
-                                    }
-                                />
-                            ))}
-                        </Stack>
-                    )}
-                    <TextField
-                        fullWidth
-                        multiline
-                        minRows={2}
-                        maxRows={7}
-                        placeholder="给 AI 发送消息…（Enter 发送，Shift + Enter 换行）"
-                        value={draft}
-                        onChange={(event) => setDraft(event.target.value)}
-                        onKeyDown={handleInputKeyDown}
-                        disabled={isSending}
-                        slotProps={{ htmlInput: { 'aria-label': '发送给 AI 的消息' } }}
-                        sx={{ border: 'none !important' }}
-                    />
-                    <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        spacing={1}
-                        sx={{ mt: 1, alignItems: { xs: 'stretch', sm: 'center' } }}
-                    >
-                        <Stack direction="row" spacing={1}>
-                            <input
-                                ref={fileInputRef}
-                                hidden
-                                type="file"
-                                multiple
-                                onChange={(event) => void addContextFiles(event)}
-                            />
-                            <input
-                                ref={folderInputRef}
-                                hidden
-                                type="file"
-                                multiple
-                                onChange={(event) => void addContextFiles(event)}
-                            />
-                            <ButtonContained
-                                startIcon={<AttachFileRoundedIcon />}
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isReadingFiles || isSending}
-                            >
-                                添加文件
-                            </ButtonContained>
-                            <ButtonContained
-                                startIcon={<FolderOpenRoundedIcon />}
-                                onClick={() => folderInputRef.current?.click()}
-                                disabled={isReadingFiles || isSending}
-                            >
-                                选择目录
-                            </ButtonContained>
-                            {contextFiles.length > 0 && (
-                                <Tooltip title="清除已选文件">
-                                    <IconButton
-                                        size="small"
-                                        aria-label="清除已选文件"
-                                        onClick={() => setContextFiles([])}
-                                        disabled={isSending}
-                                    >
-                                        <CloseRoundedIcon fontSize="small" />
-                                    </IconButton>
-                                </Tooltip>
+            <Box sx={{ px: { xs: 1.5, sm: 2 }, py: 1.5 }}>
+                <Paper
+                    variant="outlined"
+                    sx={{
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        bgcolor: 'background.paper',
+                        transition: 'border-color 180ms ease, box-shadow 180ms ease',
+                        '&:focus-within': {
+                            borderColor: 'primary.main',
+                            boxShadow: (theme) =>
+                                `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+                        },
+                    }}
+                >
+                    <Box component="form" onSubmit={(event) => void handleSend(event)}>
+                        <Stack spacing={1} sx={{ p: 1.5 }}>
+                            {error && (
+                                <Alert severity="error" onClose={() => setError('')}>
+                                    {error}
+                                </Alert>
                             )}
+                            {notice && (
+                                <Alert severity="info" onClose={() => setNotice('')}>
+                                    {notice}
+                                </Alert>
+                            )}
+                            {contextFiles.length > 0 && (
+                                <Stack
+                                    direction="row"
+                                    spacing={0.75}
+                                    useFlexGap
+                                    sx={{ flexWrap: 'wrap', alignItems: 'center' }}
+                                >
+                                    {contextFiles.map((file) => (
+                                        <Chip
+                                            key={file.path}
+                                            size="small"
+                                            icon={<AttachFileRoundedIcon />}
+                                            label={file.path}
+                                            onDelete={() =>
+                                                setContextFiles((current) =>
+                                                    current.filter(
+                                                        (item) => item.path !== file.path,
+                                                    ),
+                                                )
+                                            }
+                                        />
+                                    ))}
+                                    <Typography variant="caption" color="text.secondary">
+                                        共 {contextFiles.length} 个文件 · 约{' '}
+                                        {formatTokenCount(
+                                            Math.round(
+                                                contextFiles.reduce(
+                                                    (total, file) => total + file.size,
+                                                    0,
+                                                ) / 1024,
+                                            ),
+                                        )}{' '}
+                                        KB
+                                    </Typography>
+                                </Stack>
+                            )}
+                            <TextField
+                                fullWidth
+                                multiline
+                                minRows={2}
+                                maxRows={7}
+                                variant="standard"
+                                placeholder="给 AI 发送消息…（Enter 发送，Shift + Enter 换行）"
+                                value={draft}
+                                onChange={(event) => setDraft(event.target.value)}
+                                onKeyDown={handleInputKeyDown}
+                                disabled={isSending}
+                                slotProps={{
+                                    input: { disableUnderline: true },
+                                    htmlInput: { 'aria-label': '发送给 AI 的消息' },
+                                }}
+                                sx={{ px: 0.5 }}
+                            />
+                            <Stack
+                                direction={{ xs: 'column', sm: 'row' }}
+                                spacing={1}
+                                sx={{
+                                    alignItems: { xs: 'stretch', sm: 'center' },
+                                    justifyContent: 'space-between',
+                                }}
+                            >
+                                <Stack
+                                    direction="row"
+                                    spacing={0.5}
+                                    useFlexGap
+                                    sx={{ flexWrap: 'wrap', alignItems: 'center' }}
+                                >
+                                    <input
+                                        ref={fileInputRef}
+                                        hidden
+                                        type="file"
+                                        multiple
+                                        onChange={(event) => void addContextFiles(event)}
+                                    />
+                                    <input
+                                        ref={folderInputRef}
+                                        hidden
+                                        type="file"
+                                        multiple
+                                        onChange={(event) => void addContextFiles(event)}
+                                    />
+                                    <Button
+                                        size="small"
+                                        color="inherit"
+                                        startIcon={<AttachFileRoundedIcon />}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isReadingFiles || isSending}
+                                        sx={{ color: 'text.secondary' }}
+                                    >
+                                        添加文件
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        color="inherit"
+                                        startIcon={<FolderOpenRoundedIcon />}
+                                        onClick={() => folderInputRef.current?.click()}
+                                        disabled={isReadingFiles || isSending}
+                                        sx={{ color: 'text.secondary' }}
+                                    >
+                                        选择目录
+                                    </Button>
+                                    {contextFiles.length > 0 && (
+                                        <Tooltip title="清除已选文件">
+                                            <IconButton
+                                                size="small"
+                                                aria-label="清除已选文件"
+                                                onClick={() => setContextFiles([])}
+                                                disabled={isSending}
+                                            >
+                                                <CloseRoundedIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+                                </Stack>
+                                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                    <Typography
+                                        variant="caption"
+                                        color="text.disabled"
+                                        sx={{ display: { xs: 'none', md: 'block' } }}
+                                    >
+                                        仅发送选中的文本文件；写入文件前会再次确认
+                                    </Typography>
+                                    {isSending ? (
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            startIcon={<StopCircleOutlinedIcon />}
+                                            onClick={() => requestControllerRef.current?.abort()}
+                                        >
+                                            停止
+                                        </Button>
+                                    ) : (
+                                        <ButtonContained
+                                            type="submit"
+                                            endIcon={<SendRoundedIcon />}
+                                            disabled={
+                                                !model ||
+                                                (!draft.trim() && contextFiles.length === 0) ||
+                                                isReadingFiles
+                                            }
+                                        >
+                                            发送
+                                        </ButtonContained>
+                                    )}
+                                </Stack>
+                            </Stack>
                         </Stack>
-                        <TextSmall>仅发送选中的文本文件；写入本地文件前会再次询问确认。</TextSmall>
-                        {isSending ? (
-                            <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={<StopCircleOutlinedIcon />}
-                                onClick={() => requestControllerRef.current?.abort()}
-                            >
-                                停止
-                            </Button>
-                        ) : (
-                            <ButtonContained
-                                type="submit"
-                                endIcon={<SendRoundedIcon />}
-                                disabled={
-                                    !model ||
-                                    (!draft.trim() && contextFiles.length === 0) ||
-                                    isReadingFiles
-                                }
-                            >
-                                Send
-                            </ButtonContained>
-                        )}
-                    </Stack>
-                </Box>
-            </Stack>
+                    </Box>
+                </Paper>
+            </Box>
             <Dialog
                 open={review !== null}
                 onClose={() => {

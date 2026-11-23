@@ -34,6 +34,18 @@ export interface ZhipuChatOptions {
   signal?: AbortSignal
 }
 
+export interface ZhipuUsage {
+  prompt_tokens: number
+  completion_tokens: number
+  total_tokens: number
+  cached_tokens?: number
+}
+
+export interface ZhipuChatResult {
+  content: string
+  usage?: ZhipuUsage
+}
+
 export interface ZhipuChatCompletion {
   id: string
   model: string
@@ -44,6 +56,7 @@ export interface ZhipuChatCompletion {
     }
     finish_reason: string | null
   }[]
+  usage?: ZhipuUsage
 }
 
 export class ZhipuApiError extends Error {
@@ -81,6 +94,26 @@ function isChatCompletion(value: unknown): value is ZhipuChatCompletion {
         (typeof choice.finish_reason === 'string' || choice.finish_reason === null),
     )
   )
+}
+
+function normalizeUsage(value: unknown): ZhipuUsage | undefined {
+  if (!isRecord(value) || typeof value.total_tokens !== 'number') {
+    return undefined
+  }
+
+  const details = isRecord(value.prompt_tokens_details) ? value.prompt_tokens_details : undefined
+  const cachedTokens =
+    typeof details?.cached_tokens === 'number' ? details.cached_tokens : undefined
+  const completionTokens = typeof value.completion_tokens === 'number' ? value.completion_tokens : 0
+  const promptTokens =
+    typeof value.prompt_tokens === 'number' ? value.prompt_tokens : value.total_tokens - completionTokens
+
+  return {
+    prompt_tokens: promptTokens,
+    completion_tokens: completionTokens,
+    total_tokens: value.total_tokens,
+    cached_tokens: cachedTokens,
+  }
 }
 
 function getErrorMessage(body: string, status: number): string {
@@ -226,16 +259,16 @@ export function createZhipuClient(options: ZhipuClientOptions) {
       throw new Error('智谱 API 返回的数据格式不正确')
     }
 
-    return result
+    return { ...result, usage: normalizeUsage(result.usage) }
   }
 
-  async function chat(chatOptions: ZhipuChatOptions): Promise<string> {
+  async function chat(chatOptions: ZhipuChatOptions): Promise<ZhipuChatResult> {
     const completion = await createChatCompletion(chatOptions)
     const content = completion.choices[0]?.message.content
     if (content === null || content === undefined) {
       throw new Error('智谱 API 响应中没有文本内容')
     }
-    return content
+    return { content, usage: completion.usage }
   }
 
   return { chat, createChatCompletion, listModels }
