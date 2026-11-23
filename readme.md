@@ -1,3 +1,10 @@
+## 使用Cline
+### 打开 VSCode 插件市场，搜索 cline 安装
+### 在 Cline 里选择 “Use your own API Key”，API Provider 选 OpenAI Compatible
+### Base URL 填 https://open.bigmodel.cn/api/paas/v4，API Key 填你平台上的密钥
+### 模型选“使用自定义”，输入 glm-5.3-flash（你的赠送资源包正好适用）
+
+
 ## [太阳系](https://qunabu.github.io/Gravity/#third-cosmic)
 ![Gravity solar system simulation](src/assets/images/gravity.png)
 
