@@ -3,5 +3,7 @@ node_modules
 .env.*.local
 .translate-zh-progress.md
 .novel-rewrite-progress.md
+.novel-stone-progress.md
+.novel-ming-progress.md
 
 dist
