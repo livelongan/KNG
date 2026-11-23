@@ -1,22 +1,22 @@
-import { TextField, type TextFieldProps } from '@mui/material'
-import { memo } from 'react'
-import { FormBase, type FormTextName } from './form-base'
-import { areFormFieldPropsEqual } from './form-field-memo'
-import type { FormInstance } from './use-form'
+import { TextField, type TextFieldProps } from "@mui/material";
+import { memo } from "react";
+import { FormBase, type FormTextName } from "./form-base";
+import { areFormFieldPropsEqual } from "./form-field-memo";
+import type { FormInstance } from "./use-form";
 
-type FormValues = Record<string, unknown>
+type FormValues = Record<string, unknown>;
 
-const nonDigitPattern = /\D+/g
+const nonDigitPattern = /\D+/g;
 
 export type FormDigitalProps<
   TValues extends FormValues,
   TField extends FormTextName<TValues> = FormTextName<TValues>,
-> = Omit<TextFieldProps, 'type'> & {
-  store: FormInstance<TValues>
-  name: TField
-  clearable?: boolean
-  onClear?: () => void
-}
+> = Omit<TextFieldProps, "type"> & {
+  store: FormInstance<TValues>;
+  name: TField;
+  clearable?: boolean;
+  onClear?: () => void;
+};
 
 const FormDigitalBase = <
   TValues extends FormValues,
@@ -65,28 +65,31 @@ const FormDigitalBase = <
           required={required || Boolean(requiredProp)}
           disabled={disabled}
           onChange={(event) => {
-            const nextValue = event.target.value.replace(nonDigitPattern, '')
+            const nextValue = event.target.value.replace(nonDigitPattern, "");
 
             if (nextValue !== event.target.value) {
-              event.target.value = nextValue
+              event.target.value = nextValue;
             }
 
-            onFieldChange(nextValue)
-            onChange?.(event)
+            onFieldChange(nextValue);
+            onChange?.(event);
           }}
           onFocus={(event) => {
-            onFieldFocus()
-            onFocus?.(event)
+            onFieldFocus();
+            onFocus?.(event);
           }}
           onBlur={(event) => {
-            onFieldBlur()
-            onBlur?.(event)
+            onFieldBlur();
+            onBlur?.(event);
           }}
           slotProps={mergedSlotProps}
         />
       )}
     </FormBase>
-  )
-}
+  );
+};
 
-export const FormDigital = memo(FormDigitalBase, areFormFieldPropsEqual) as typeof FormDigitalBase
+export const FormDigital = memo(
+  FormDigitalBase,
+  areFormFieldPropsEqual,
+) as typeof FormDigitalBase;

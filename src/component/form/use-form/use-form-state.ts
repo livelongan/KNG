@@ -9,9 +9,9 @@ export const initialFormState: FormState = {
   // Whether submit is currently in progress.
   submitting: false,
   // Whether submit has ever been attempted.
-  submitted: false,
-  // Whether the latest submit attempt succeeded.
-  submitSuccess: false,
+  submitAttempted: false,
+  // Whether the latest submit handler resolved without throwing.
+  submitResolved: false,
   // Whether any field value differs from its initial value.
   dirty: false,
   // Whether any field has been interacted with.
@@ -21,15 +21,14 @@ export const initialFormState: FormState = {
   // Whether the current form state is invalid.
   invalid: false,
   // Whether current values/rules allow submit.
-  submitable: true,
+  submittable: true,
   // Number of submit attempts.
   submitCount: 0,
 };
 
 // Accept either a partial state patch or a producer function.
 export type FormStateUpdate =
-  | Partial<FormState>
-  | ((previousState: FormState) => FormState);
+  Partial<FormState> | ((previousState: FormState) => FormState);
 
 export const useFormState = () => {
   const [formState, setFormStateStore] = useState<FormState>(() => ({

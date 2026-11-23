@@ -1,6 +1,6 @@
-import { Button } from '@mui/material';
-import type { ButtonProps } from '@mui/material';
-import { observer } from 'mobx-react-lite';
+import { Button } from "@mui/material";
+import type { ButtonProps } from "@mui/material";
+import { observer } from "mobx-react-lite";
 
 export type ButtonNormalProps = ButtonProps & {
   children: React.ReactNode;
@@ -18,10 +18,10 @@ export const ButtonNormal = observer(
     ...props
   }: ButtonNormalProps) => {
     const mergedClass = !replaceClassName
-      ? `button-normal ${className ?? ''}`.trim()
+      ? `button-normal ${className ?? ""}`.trim()
       : className;
     const resolvedLoadingPosition =
-      loading && loadingPosition == null ? 'start' : loadingPosition;
+      loading && loadingPosition == null ? "start" : loadingPosition;
 
     return (
       <Button

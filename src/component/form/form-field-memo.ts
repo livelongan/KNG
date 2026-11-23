@@ -1,62 +1,71 @@
-import type { FormInstance } from './use-form'
+import type { FormInstance } from "./use-form";
 
-type FormValues = Record<string, unknown>
+type FormValues = Record<string, unknown>;
 
 type FormFieldMemoProps<TValues extends FormValues> = {
-    store: FormInstance<TValues>
-    name: Extract<keyof TValues, string>
-} & Record<string, unknown>
+  store: FormInstance<TValues>;
+  name: Extract<keyof TValues, string>;
+} & Record<string, unknown>;
 
 const hasSameNonStoreProps = (
-    previousProps: Record<string, unknown>,
-    nextProps: Record<string, unknown>,
+  previousProps: Record<string, unknown>,
+  nextProps: Record<string, unknown>,
 ): boolean => {
-    const previousKeys = Object.keys(previousProps)
-    const nextKeys = Object.keys(nextProps)
+  const previousKeys = Object.keys(previousProps);
+  const nextKeys = Object.keys(nextProps);
 
-    if (previousKeys.length !== nextKeys.length) {
-        return false
+  if (previousKeys.length !== nextKeys.length) {
+    return false;
+  }
+
+  for (const key of previousKeys) {
+    if (key === "store") {
+      continue;
     }
 
-    for (const key of previousKeys) {
-        if (key === 'store') {
-            continue
-        }
-
-        if (!(key in nextProps)) {
-            return false
-        }
-
-        if (!Object.is(previousProps[key], nextProps[key])) {
-            return false
-        }
+    if (!(key in nextProps)) {
+      return false;
     }
 
-    return true
-}
+    if (!Object.is(previousProps[key], nextProps[key])) {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 export const areFormFieldPropsEqual = <TValues extends FormValues>(
-    previousProps: FormFieldMemoProps<TValues>,
-    nextProps: FormFieldMemoProps<TValues>,
+  previousProps: FormFieldMemoProps<TValues>,
+  nextProps: FormFieldMemoProps<TValues>,
 ): boolean => {
-    if (!Object.is(previousProps.name, nextProps.name)) {
-        return false
-    }
+  if (!Object.is(previousProps.name, nextProps.name)) {
+    return false;
+  }
 
-    if (
-        !hasSameNonStoreProps(
-            previousProps as Record<string, unknown>,
-            nextProps as Record<string, unknown>,
-        )
-    ) {
-        return false
-    }
-
-    const fieldName = nextProps.name
-
-    return (
-        Object.is(previousProps.store.values[fieldName], nextProps.store.values[fieldName]) &&
-        Object.is(previousProps.store.errors[fieldName], nextProps.store.errors[fieldName]) &&
-        Object.is(previousProps.store.rules[fieldName], nextProps.store.rules[fieldName])
+  if (
+    !hasSameNonStoreProps(
+      previousProps as Record<string, unknown>,
+      nextProps as Record<string, unknown>,
     )
-}
+  ) {
+    return false;
+  }
+
+  const fieldName = nextProps.name;
+
+  return (
+    Object.is(
+      previousProps.store.values[fieldName],
+      nextProps.store.values[fieldName],
+    ) &&
+    Object.is(
+      previousProps.store.errors[fieldName],
+      nextProps.store.errors[fieldName],
+    ) &&
+    Object.is(
+      previousProps.store.rules[fieldName],
+      nextProps.store.rules[fieldName],
+    )
+  );
+};

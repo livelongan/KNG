@@ -1,6 +1,6 @@
-import { baseInitState } from './init-state/base';
-import type { RootStore, RootStoreType } from './root-model';
-import { RootStoreModel } from './root-model';
+import { baseInitState } from "./init-state/base";
+import type { RootStore, RootStoreType } from "./root-model";
+import { RootStoreModel } from "./root-model";
 
 const rootInitStore: RootStoreType = {
   baseStore: { ...baseInitState },

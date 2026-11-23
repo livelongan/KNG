@@ -30,7 +30,7 @@ export const useFormError = <TValues extends KeyValue>(
         ...previousState,
         valid: true,
         invalid: false,
-        submitable: true,
+        submittable: true,
       }));
     }, [setFormState]);
 
@@ -58,7 +58,7 @@ export const useFormError = <TValues extends KeyValue>(
         ...previousState,
         valid: !hasErrors,
         invalid: hasErrors,
-        submitable: !hasErrors,
+        submittable: !hasErrors,
       }));
       syncFieldErrorToState(name, nextError ?? null);
     },

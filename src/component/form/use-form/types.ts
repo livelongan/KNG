@@ -1,5 +1,3 @@
-export type KeyValue = Record<string, unknown>;
-
 export type RuleType<TValue> = { value: TValue; message: string };
 
 export type RuleProps<TValue> = TValue | RuleType<TValue>;
@@ -68,13 +66,13 @@ export type FormState = {
   validated?: boolean;
   validating?: boolean;
   submitting?: boolean;
-  submitted?: boolean;
-  submitSuccess?: boolean;
+  submitAttempted?: boolean;
+  submitResolved?: boolean;
   dirty?: boolean;
   touched?: boolean;
   valid?: boolean;
   invalid?: boolean;
-  submitable?: boolean;
+  submittable?: boolean;
   submitCount?: number;
 };
 
@@ -85,9 +83,7 @@ export type FormHookOptions<TValues extends KeyValue> = {
 
 export type FormRulePatch<TValues extends KeyValue> = Partial<{
   [TField in keyof TValues]:
-    | FormRule<TValues[TField], TValues>
-    | null
-    | undefined;
+    FormRule<TValues[TField], TValues> | null | undefined;
 }>;
 
 export type FormValueSubscriber<TValues extends KeyValue> = (

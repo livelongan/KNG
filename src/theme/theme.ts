@@ -1,12 +1,13 @@
-import type { PaletteMode } from '@mui/material';
-import { alpha, createTheme } from '@mui/material/styles';
-import type {} from '@mui/x-date-pickers/themeAugmentation';
-import { darkPaletteConfig } from './dark-palette';
-import { formThemeConfig } from './form-config';
-import { lightPaletteConfig } from './light-palette';
+import type { PaletteMode } from "@mui/material";
+import { alpha, createTheme } from "@mui/material/styles";
+import type {} from "@mui/x-date-pickers/themeAugmentation";
+import { darkPaletteConfig } from "./dark-palette";
+import { formThemeConfig } from "./form-config";
+import { lightPaletteConfig } from "./light-palette";
 
 export function createAppTheme(mode: PaletteMode) {
-  const paletteConfig = mode === 'dark' ? darkPaletteConfig : lightPaletteConfig;
+  const paletteConfig =
+    mode === "dark" ? darkPaletteConfig : lightPaletteConfig;
 
   const { palette, custom } = paletteConfig;
   const appBarBackgroundImage = custom.barBackground;
@@ -18,9 +19,9 @@ export function createAppTheme(mode: PaletteMode) {
   const defaultFontWeight = 400;
   const appFontFamily = '"IBM Plex Sans","Noto Sans SC",sans-serif';
   const smallFontFamily = appFontFamily;
-  const inputLineHeight = '1.4375em';
-  const buttonLineHeight = '2.2ex';
-  const buttonPaddingBlock = '0.8ex';
+  const inputLineHeight = "1.4375em";
+  const buttonLineHeight = "2.2ex";
+  const buttonPaddingBlock = "0.8ex";
 
   return createTheme({
     palette,
@@ -46,30 +47,30 @@ export function createAppTheme(mode: PaletteMode) {
         fontWeight: defaultFontWeight,
       },
       h1: {
-        fontSize: '1.5rem',
+        fontSize: "1.5rem",
         fontWeight: 700,
-        letterSpacing: '-0.03em',
+        letterSpacing: "-0.03em",
       },
       h2: {
-        fontSize: '1.25rem',
+        fontSize: "1.25rem",
         fontWeight: 700,
-        letterSpacing: '-0.025em',
+        letterSpacing: "-0.025em",
       },
       h3: {
-        fontSize: '1rem',
+        fontSize: "1rem",
         fontWeight: 700,
-        letterSpacing: '-0.02em',
+        letterSpacing: "-0.02em",
       },
       h4: {
         fontWeight: 700,
-        letterSpacing: '-0.02em',
+        letterSpacing: "-0.02em",
       },
       h6: {
         fontWeight: 700,
-        letterSpacing: '-0.01em',
+        letterSpacing: "-0.01em",
       },
       button: {
-        textTransform: 'none',
+        textTransform: "none",
         fontWeight: 400,
         fontFamily: appFontFamily,
         lineHeight: buttonLineHeight,
@@ -78,29 +79,42 @@ export function createAppTheme(mode: PaletteMode) {
     components: {
       MuiCssBaseline: {
         styleOverrides: {
-          ':root': {
-            '--small-font-family': smallFontFamily,
+          ":root": {
+            "--small-font-family": smallFontFamily,
+            "--font-family-small": smallFontFamily,
+            "--border-radius": `${input.borderRadius}px`,
+            "--primary-main": palette.primary.main,
+            "--error-main": palette.error.main,
+            "--error-dark": palette.error.dark,
+            "--divider": palette.divider,
+            "--text-primary": palette.text.primary,
+            "--action-disabled": palette.action.disabled,
+            "--background-disabled": palette.action.disabledBackground,
           },
           html: {
             fontSize: `${rootFontSize}px`,
           },
           body: {
-            fontSize: '1rem',
+            fontSize: "1rem",
             fontFamily: appFontFamily,
             lineHeight: globalLineHeight,
           },
-          'button, input, textarea, select': {
+          "button, input, textarea, select": {
             fontFamily: appFontFamily,
+          },
+          'input, textarea, [contenteditable="true"]': {
+            /* 光标颜色 */
+            caretColor: palette.primary.main,
           },
         },
       },
       MuiSvgIcon: {
         defaultProps: {
-          fontSize: 'small',
+          fontSize: "small",
         },
         styleOverrides: {
           fontSizeSmall: {
-            fontSize: '1.25rem',
+            fontSize: "1.25rem",
           },
         },
       },
@@ -112,14 +126,14 @@ export function createAppTheme(mode: PaletteMode) {
               variant: input.variant,
             },
             openPickerButton: {
-              size: 'small',
-              edge: 'end',
+              size: "small",
+              edge: "end",
               sx: {
                 marginRight: -1,
               },
             },
             openPickerIcon: {
-              fontSize: 'small',
+              fontSize: "small",
             },
           },
         },
@@ -132,14 +146,14 @@ export function createAppTheme(mode: PaletteMode) {
               variant: input.variant,
             },
             openPickerButton: {
-              size: 'small',
-              edge: 'end',
+              size: "small",
+              edge: "end",
               sx: {
                 marginRight: -1,
               },
             },
             openPickerIcon: {
-              fontSize: 'small',
+              fontSize: "small",
             },
           },
         },
@@ -148,42 +162,42 @@ export function createAppTheme(mode: PaletteMode) {
         styleOverrides: {
           root: {
             fontFamily: appFontFamily,
-            borderRadius: '100px',
+            borderRadius: "100px",
             lineHeight: buttonLineHeight,
             paddingBlock: buttonPaddingBlock,
-            paddingInline: '16px',
-            transition: 'border-radius 320ms cubic-bezier(0.22, 1, 0.36, 1)',
-            '&:hover': {
+            paddingInline: "16px",
+            transition: "border-radius 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+            "&:hover": {
               borderRadius: 0,
             },
-            '&.MuiButton-loading': {
+            "&.MuiButton-loading": {
               opacity: 1,
             },
-            '&.MuiButton-loading.Mui-disabled': {
+            "&.MuiButton-loading.Mui-disabled": {
               opacity: 1,
             },
-            '&.MuiButton-loading .MuiButton-loadingIndicator': {
-              color: 'inherit',
+            "&.MuiButton-loading .MuiButton-loadingIndicator": {
+              color: "inherit",
             },
           },
           contained: ({ theme }) => ({
-            '&.MuiButton-loading.Mui-disabled': {
+            "&.MuiButton-loading.Mui-disabled": {
               backgroundColor: theme.palette.primary.main,
               color: theme.palette.primary.contrastText,
             },
-            '&.MuiButton-loading.Mui-disabled:hover': {
+            "&.MuiButton-loading.Mui-disabled:hover": {
               backgroundColor: theme.palette.primary.main,
             },
           }),
           outlined: ({ theme }) => ({
-            '&.MuiButton-loading.Mui-disabled': {
+            "&.MuiButton-loading.Mui-disabled": {
               color: theme.palette.primary.main,
               borderColor: alpha(theme.palette.primary.main, 0.5),
               backgroundColor: alpha(theme.palette.primary.main, 0.08),
             },
           }),
           text: ({ theme }) => ({
-            '&.MuiButton-loading.Mui-disabled': {
+            "&.MuiButton-loading.Mui-disabled": {
               color: theme.palette.primary.main,
             },
           }),
@@ -222,25 +236,25 @@ export function createAppTheme(mode: PaletteMode) {
       MuiSelect: {
         styleOverrides: {
           icon: {
-            top: 'unset !important',
+            top: "unset !important",
             right: 6,
-            width: 'auto',
-            height: 'auto',
+            width: "auto",
+            height: "auto",
             padding: 6,
-            pointerEvents: 'none',
-            '& .MuiSvgIcon-root': {
-              fontSize: '1.25rem',
+            pointerEvents: "none",
+            "& .MuiSvgIcon-root": {
+              fontSize: "1.25rem",
             },
           },
           iconOpen: {
-            transform: 'none',
+            transform: "none",
           },
         },
       },
       MuiNativeSelect: {
         styleOverrides: {
           icon: {
-            top: 'unset !important',
+            top: "unset !important",
           },
         },
       },
@@ -251,7 +265,17 @@ export function createAppTheme(mode: PaletteMode) {
         },
         styleOverrides: {
           root: {
-            '&:not(.MuiFormControl-fullWidth)': {
+            "&:not(.MuiFormControl-fullWidth)": {
+              width: input.width,
+              maxWidth: input.maxWidth,
+            },
+          },
+        },
+      },
+      MuiAutocomplete: {
+        styleOverrides: {
+          root: {
+            "&:not(.MuiAutocomplete-fullWidth)": {
               width: input.width,
               maxWidth: input.maxWidth,
             },
@@ -264,16 +288,16 @@ export function createAppTheme(mode: PaletteMode) {
             fontSize: label.fontSize,
             fontWeight: label.fontWeight,
             color: inputLabelColor,
-            '&.Mui-focused': {
+            "&.Mui-focused": {
               fontWeight: label.focusFontWeight,
             },
-            '&.Mui-error': {
+            "&.Mui-error": {
               color: theme.palette.error.main,
             },
           }),
           asterisk: ({ theme }) => ({
             color: theme.palette.error.main,
-            '&.Mui-error': {
+            "&.Mui-error": {
               color: theme.palette.error.main,
             },
           }),
@@ -282,8 +306,8 @@ export function createAppTheme(mode: PaletteMode) {
       MuiFormHelperText: {
         styleOverrides: {
           root: ({ theme }) => ({
-            fontFamily: 'var(--small-font-family)',
-            '&.Mui-error': {
+            fontFamily: "var(--small-font-family)",
+            "&.Mui-error": {
               color: theme.palette.error.main,
             },
           }),
@@ -305,7 +329,7 @@ export function createAppTheme(mode: PaletteMode) {
           },
           asterisk: ({ theme }) => ({
             color: theme.palette.error.main,
-            '&.Mui-error': {
+            "&.Mui-error": {
               color: theme.palette.error.main,
             },
           }),
@@ -314,15 +338,15 @@ export function createAppTheme(mode: PaletteMode) {
       MuiListItemText: {
         styleOverrides: {
           primary: {
-            fontSize: '1rem',
+            fontSize: "1rem",
           },
         },
       },
       MuiFormGroup: {
         styleOverrides: {
           row: {
-            '&.MuiRadioGroup-row': {
-              gap: '16px',
+            "&.MuiRadioGroup-row": {
+              gap: "16px",
             },
           },
         },
@@ -341,13 +365,13 @@ export function createAppTheme(mode: PaletteMode) {
             fontSize: label.fontSize,
             fontWeight: label.fontWeight,
             color: inputLabelColor,
-            '&.Mui-focused': {
+            "&.Mui-focused": {
               fontWeight: label.focusFontWeight,
             },
-            '&.Mui-error': {
+            "&.Mui-error": {
               color: theme.palette.error.main,
             },
-            '&.Mui-focused.Mui-error': {
+            "&.Mui-focused.Mui-error": {
               color: theme.palette.error.main,
             },
           }),
@@ -377,30 +401,35 @@ export function createAppTheme(mode: PaletteMode) {
           },
           root: ({ theme }) => ({
             borderRadius: input.borderRadius,
-            '& .MuiInputAdornment-positionEnd': {
+            "& .MuiInputAdornment-positionEnd": {
               marginLeft: 4,
               marginRight: 0,
             },
-            '& .MuiInputAdornment-positionEnd .MuiIconButton-root': {
+            "& .MuiInputAdornment-positionEnd .MuiIconButton-root": {
               padding: 6,
             },
-            '& .MuiInputAdornment-positionEnd .MuiIconButton-edgeEnd': {
+            "& .MuiInputAdornment-positionEnd .MuiIconButton-edgeEnd": {
               marginRight: -8,
             },
-            '& .MuiOutlinedInput-notchedOutline': {
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--divider)",
               borderWidth: input.outlineBorderWidth,
-              transition: 'border-color 180ms ease',
+              transition: "border-color 180ms ease",
             },
-            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            "&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--text-primary)",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "var(--primary-main)",
               borderWidth: input.outlineBorderWidth,
             },
-            '&.Mui-error .MuiOutlinedInput-notchedOutline': {
+            "&.Mui-error .MuiOutlinedInput-notchedOutline": {
               borderColor: theme.palette.error.main,
             },
-            '&.Mui-error:hover .MuiOutlinedInput-notchedOutline': {
+            "&.Mui-error:hover .MuiOutlinedInput-notchedOutline": {
               borderColor: theme.palette.error.dark,
             },
-            '&.Mui-focused.Mui-error .MuiOutlinedInput-notchedOutline': {
+            "&.Mui-focused.Mui-error .MuiOutlinedInput-notchedOutline": {
               borderColor: theme.palette.error.main,
             },
           }),
@@ -409,7 +438,7 @@ export function createAppTheme(mode: PaletteMode) {
       MuiPickersTextField: {
         styleOverrides: {
           root: {
-            '&:not(.MuiFormControl-fullWidth)': {
+            "&:not(.MuiFormControl-fullWidth)": {
               width: input.width,
               maxWidth: input.maxWidth,
             },
@@ -429,27 +458,33 @@ export function createAppTheme(mode: PaletteMode) {
           },
           root: ({ theme }) => ({
             borderRadius: input.borderRadius,
-            '& .MuiInputAdornment-positionEnd': {
+            "& .MuiInputAdornment-positionEnd": {
               marginLeft: 4,
               marginRight: 0,
             },
-            '& .MuiInputAdornment-positionEnd .MuiIconButton-root': {
+            "& .MuiInputAdornment-positionEnd .MuiIconButton-root": {
               padding: 6,
             },
-            '& .MuiPickersOutlinedInput-notchedOutline': {
+            "& .MuiPickersOutlinedInput-notchedOutline": {
+              borderColor: "var(--divider)",
               borderWidth: input.outlineBorderWidth,
-              transition: 'border-color 180ms ease',
+              transition: "border-color 180ms ease",
             },
-            '&.Mui-focused .MuiPickersOutlinedInput-notchedOutline': {
+            "&:hover:not(.Mui-disabled) .MuiPickersOutlinedInput-notchedOutline":
+              {
+                borderColor: "var(--text-primary)",
+              },
+            "&.Mui-focused .MuiPickersOutlinedInput-notchedOutline": {
+              borderColor: "var(--primary-main)",
               borderWidth: input.outlineBorderWidth,
             },
-            '&.Mui-error .MuiPickersOutlinedInput-notchedOutline': {
+            "&.Mui-error .MuiPickersOutlinedInput-notchedOutline": {
               borderColor: theme.palette.error.main,
             },
-            '&.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline': {
+            "&.Mui-error:hover .MuiPickersOutlinedInput-notchedOutline": {
               borderColor: theme.palette.error.dark,
             },
-            '&.Mui-focused.Mui-error .MuiPickersOutlinedInput-notchedOutline': {
+            "&.Mui-focused.Mui-error .MuiPickersOutlinedInput-notchedOutline": {
               borderColor: theme.palette.error.main,
             },
           }),
