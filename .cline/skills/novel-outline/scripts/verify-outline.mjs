@@ -4,13 +4,14 @@
  *
  * 用法:   node verify-outline.mjs <书名-outline 目录>
  * 检查:
- *   1. 01–04 四份文档齐全
+ *   1. 01–05 五份文档齐全
  *   2. 01 必备小节(一句话简介/简介/人物小传)与「📖 教学注释」存在;人物小传表头含「暗线身份」列;
  *      mermaid 节点 id 纯 ASCII;mermaid 标签与人物小传表对齐
  *   3. 02 必备小节(明线与暗线/全书结构/明线事件链)与教学注释存在
- *   4. 03 逐章表头含「暗线动态」列;存在逐章表并统计章数;章号唯一;03 引用的 F## 必须在 04 有定义
+ *   4. 03 逐章表头含「暗线动态」「时间」「地点」列;存在逐章表并统计章数;章号唯一;03 引用的 F## 必须在 04 有定义
  *   5. 04 必备小节(伏笔表/统一名表/自检十问);伏笔编号格式;04 定义的
  *      F## 必须在 02/03 中被引用;统一名表的定稿名必须出现在 01
+ *   6. 05 必备小节(人物关系图谱/时间线/地点线)与「📖 教学注释」存在;至少一张 mermaid 图;mermaid 节点 id 纯 ASCII
  * 输出:JSON { files, chapterCount, foreshadowingCount, mermaidBlocks, warningCount, warnings: [{ code, message, detail }] }
  */
 import { readFileSync, readdirSync } from 'node:fs'
@@ -68,7 +69,7 @@ function tableFirstColumn(sectionText) {
 
 const warnings = []
 const files = {}
-for (const prefix of ['01-', '02-', '03-', '04-']) {
+for (const prefix of ['01-', '02-', '03-', '04-', '05-']) {
   files[prefix] = readFileByPrefix(prefix)
   if (!files[prefix]) {
     warnings.push({ code: 'MISSING_FILE', message: `缺少 ${prefix}*.md`, detail: '' })
@@ -163,6 +164,20 @@ if (files['03-']) {
       detail: '',
     })
   }
+  if (header03 && !header03.includes('时间')) {
+    warnings.push({
+      code: 'NO_TIME_COLUMN',
+      message: '03 逐章表头缺「时间」列(与 05 时间线对齐,防时间穿帮)',
+      detail: '',
+    })
+  }
+  if (header03 && !header03.includes('地点')) {
+    warnings.push({
+      code: 'NO_LOCATION_COLUMN',
+      message: '03 逐章表头缺「地点」列(与 05 地点线对齐,防场景漂移)',
+      detail: '',
+    })
+  }
   const numbers = []
   for (const rawLine of text03.split(/\r?\n/)) {
     const line = rawLine.trim()
@@ -234,6 +249,42 @@ if (files['04-']) {
       message: '统一名表以下定稿名未出现在 01(拼写不一致或漏登记):',
       detail: missingNames.join('、'),
     })
+  }
+}
+
+// 05: 人物图谱与时空线(关系图谱 + 时间线 + 地点线)
+if (files['05-']) {
+  const t5 = files['05-'].text
+  for (const title of ['## 人物关系图谱', '## 时间线', '## 地点线']) {
+    if (!t5.includes(title)) {
+      warnings.push({ code: 'MISSING_SECTION', message: `05 缺少「${title}」小节`, detail: '' })
+    }
+  }
+  if (!t5.includes('📖')) {
+    warnings.push({
+      code: 'NO_TEACH_NOTE',
+      message: '05 缺少「📖 教学注释」引用块',
+      detail: '',
+    })
+  }
+  const blocks5 = [...t5.matchAll(/```mermaid\r?\n([\s\S]*?)```/g)]
+  if (blocks5.length === 0) {
+    warnings.push({
+      code: 'NO_MERMAID_05',
+      message: '05 缺少人物关系图谱 mermaid 图(总图谱按阵营分组)',
+      detail: '',
+    })
+  }
+  for (const block of blocks5) {
+    for (const match of block[1].matchAll(/(^|\s)([^\s"'\[\]():]+)[[(]/g)) {
+      if (CJK.test(match[2])) {
+        warnings.push({
+          code: 'MERMAID_CJK_ID_05',
+          message: `05 mermaid 节点 id 含中文:「${match[2]}」,应改为 ASCII id、中文放引号内标签`,
+          detail: '',
+        })
+      }
+    }
   }
 }
 
