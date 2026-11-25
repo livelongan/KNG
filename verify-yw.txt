@@ -1,0 +1,14 @@
+﻿{
+  "files": {
+    "01-": "01-灵感与设定.md",
+    "02-": "02-主线大纲.md",
+    "03-": "03-逐章大纲.md",
+    "04-": "04-伏笔与自检.md",
+    "05-": "05-人物图谱与时空线.md"
+  },
+  "chapterCount": 96,
+  "foreshadowingCount": 16,
+  "mermaidBlocks": 1,
+  "warningCount": 0,
+  "warnings": []
+}
